@@ -52,6 +52,25 @@ const createTrip = async (req, res) => {
     });
   }
 
+  const driver = await User.findById(driverId);
+  if (!driver || driver.role !== 'Driver') {
+    return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Driver not found' });
+  }
+  if (driver.driverStatus !== 'Available') {
+    return res.status(400).json({
+      success: false,
+      error: 'DRIVER_UNAVAILABLE',
+      message: `Driver is not available (Current Status: ${driver.driverStatus || 'Suspended'})`
+    });
+  }
+  if (driver.licenseExpiryDate && new Date(driver.licenseExpiryDate) < new Date()) {
+    return res.status(400).json({
+      success: false,
+      error: 'EXPIRED_LICENSE',
+      message: 'Driver license has expired.'
+    });
+  }
+
   const capacity = vehicle.capacity || vehicle.maxLoadCapacity || 0;
   if (cargoWeight > capacity) {
     return res.status(400).json({
@@ -211,6 +230,25 @@ const assignVehicleAndDriver = async (req, res) => {
       success: false,
       error: 'VEHICLE_UNAVAILABLE',
       message: `Vehicle is not available (Current Status: ${vehicle.status})`
+    });
+  }
+
+  const driver = await User.findById(driverId);
+  if (!driver || driver.role !== 'Driver') {
+    return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Driver not found' });
+  }
+  if (driver.driverStatus !== 'Available') {
+    return res.status(400).json({
+      success: false,
+      error: 'DRIVER_UNAVAILABLE',
+      message: `Driver is not available (Current Status: ${driver.driverStatus || 'Suspended'})`
+    });
+  }
+  if (driver.licenseExpiryDate && new Date(driver.licenseExpiryDate) < new Date()) {
+    return res.status(400).json({
+      success: false,
+      error: 'EXPIRED_LICENSE',
+      message: 'Driver license has expired.'
     });
   }
 

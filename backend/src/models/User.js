@@ -20,7 +20,7 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["Admin", "Dispatcher", "MaintenanceStaff", "Driver"],
+    enum: ["Admin", "Dispatcher", "MaintenanceStaff", "Driver", "admin", "fleet_manager", "safety_officer", "financial_analyst", "driver"],
     required: true
   },
   phone: {
@@ -30,6 +30,14 @@ const UserSchema = new mongoose.Schema({
   status: {
     type: String,
     default: 'Active'
+  },
+  loginAttempts: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  lockUntil: {
+    type: Number
   },
   
   // Driver specific fields
@@ -78,7 +86,7 @@ UserSchema.methods.comparePassword = async function (enteredPassword) {
 };
 
 UserSchema.pre('validate', function(next) {
-  if (this.role === 'Driver') {
+  if (this.role === 'Driver' || this.role === 'driver') {
     if (!this.driverStatus) this.driverStatus = 'Available';
     if (this.phone && !this.contactNumber) this.contactNumber = this.phone;
     if (this.contactNumber && !this.phone) this.phone = this.contactNumber;
@@ -89,7 +97,12 @@ UserSchema.pre('validate', function(next) {
 UserSchema.set('toJSON', {
   virtuals: true,
   transform: (doc, ret) => {
-    if (ret.role === 'Driver') {
+    // Map database roles to legacy frontend roles for compatibility
+    if (ret.role === 'Admin') ret.role = 'fleet_manager';
+    else if (ret.role === 'Dispatcher') ret.role = 'safety_officer';
+    else if (ret.role === 'Driver') ret.role = 'driver';
+
+    if (ret.role === 'Driver' || ret.role === 'driver') {
       ret.status = ret.driverStatus || 'Available';
     }
     return ret;

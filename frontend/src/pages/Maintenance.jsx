@@ -150,10 +150,12 @@ const Maintenance = () => {
         </div>
 
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm active:scale-[0.98]">
-              <Plus className="h-4 w-4" /> Open Maintenance Ticket
-            </Button>
+          <DialogTrigger
+            render={
+              <Button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-955 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm active:scale-[0.98]" />
+            }
+          >
+            <Plus className="h-4 w-4" /> Open Maintenance Ticket
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px] rounded-2xl border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-2xl">
             <DialogHeader>

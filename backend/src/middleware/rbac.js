@@ -8,7 +8,21 @@ const authorize = (...roles) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    const roleMapping = {
+      fleet_manager: 'Admin',
+      safety_officer: 'Dispatcher',
+      financial_analyst: 'Dispatcher',
+      driver: 'Driver',
+      admin: 'Admin',
+      Admin: 'Admin',
+      Dispatcher: 'Dispatcher',
+      Driver: 'Driver'
+    };
+
+    const userMappedRole = roleMapping[req.user.role] || req.user.role;
+    const mappedRequiredRoles = roles.map(r => roleMapping[r] || r);
+
+    if (!mappedRequiredRoles.includes(userMappedRole)) {
       return res.status(403).json({
         success: false,
         error: "FORBIDDEN",

@@ -30,18 +30,6 @@ router.post('/signup', authLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Please provide all fields' });
     }
 
-    // Map legacy roles to new roles
-    let mappedRole = role;
-    if (role === 'fleet_manager') mappedRole = 'Admin';
-    else if (role === 'safety_officer') mappedRole = 'Dispatcher';
-    else if (role === 'financial_analyst') mappedRole = 'Dispatcher';
-    else if (role === 'driver') mappedRole = 'Driver';
-
-    // Capitalize first letter to match new roles just in case
-    if (mappedRole) {
-      mappedRole = mappedRole.charAt(0).toUpperCase() + mappedRole.slice(1);
-    }
-
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ error: 'User already exists with this email' });
@@ -51,7 +39,7 @@ router.post('/signup', authLimiter, async (req, res) => {
       name,
       email,
       passwordHash: password,
-      role: mappedRole
+      role: role
     });
 
     const token = generateToken(user._id);
@@ -86,13 +74,36 @@ router.post('/login', authLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
     if (user.status === 'Inactive') {
       return res.status(403).json({ error: 'User account is inactive' });
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingTime = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ error: `Account is temporarily locked. Try again in ${remainingTime} minute(s).` });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      user.loginAttempts += 1;
+      let errorMsg = 'Invalid credentials';
+      if (user.loginAttempts >= 5) {
+        user.lockUntil = Date.now() + 30 * 60 * 1000;
+        user.loginAttempts = 0;
+        errorMsg = 'Invalid credentials. Your account is temporarily locked for 30 minutes due to 5 consecutive failed login attempts.';
+      } else {
+        const remainingAttempts = 5 - user.loginAttempts;
+        errorMsg = `Invalid credentials. ${remainingAttempts} attempt(s) remaining before account locking.`;
+      }
+      await user.save();
+      return res.status(401).json({ error: errorMsg });
+    }
+
+    // Reset login attempts on successful login
+    if (user.loginAttempts > 0 || user.lockUntil) {
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
+      await user.save();
     }
 
     const token = generateToken(user._id);

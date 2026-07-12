@@ -249,10 +249,12 @@ const Trips = () => {
         </div>
 
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetCreateForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm active:scale-[0.98]">
-              <Plus className="h-4 w-4" /> Create Trip Request
-            </Button>
+          <DialogTrigger
+            render={
+              <Button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-955 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-sm active:scale-[0.98]" />
+            }
+          >
+            <Plus className="h-4 w-4" /> Create Trip Request
           </DialogTrigger>
           <DialogContent className="max-w-[95vw] sm:max-w-5xl w-full p-0 overflow-hidden rounded-2xl border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-2xl">
             <div className="grid grid-cols-1 lg:grid-cols-5 h-full max-h-[85vh]">
