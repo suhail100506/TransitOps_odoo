@@ -9,10 +9,7 @@ import Trips from './pages/Trips';
 import Maintenance from './pages/Maintenance';
 import Expenses from './pages/Expenses';
 import Reports from './pages/Reports';
-<<<<<<< HEAD
-=======
 import UsersManagement from './pages/UsersManagement';
->>>>>>> dev
 import Settings from './pages/Settings';
 import { Loader2 } from 'lucide-react';
 
