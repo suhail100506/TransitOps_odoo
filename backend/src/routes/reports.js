@@ -7,13 +7,50 @@ const { protect, allowRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
+// ---------------------------------------------------------------------------
+// Shared Helper: Build ROI data for a list of vehicles
+// Avoids duplicating DB queries between /roi and /export endpoints
+// ---------------------------------------------------------------------------
+async function buildRoiRows(vehicles) {
+  const rows = [];
+  for (const vehicle of vehicles) {
+    const fuelLogs = await FuelLog.find({ vehicleId: vehicle._id });
+    const fuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
+
+    const maintenanceLogs = await Maintenance.find({ vehicleId: vehicle._id });
+    const maintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
+
+    const trips = await Trip.find({ vehicleId: vehicle._id, status: 'Completed' });
+    const totalDistance = trips.reduce((sum, trip) => sum + (trip.actualDistance || 0), 0);
+    const revenue = totalDistance * 3.50; // $3.50 per km
+
+    const acquisitionCost = vehicle.acquisitionCost;
+    const totalCosts = fuelCost + maintenanceCost;
+    const netProfit = revenue - totalCosts;
+    const roi = acquisitionCost > 0
+      ? parseFloat(((netProfit / acquisitionCost) * 100).toFixed(2))
+      : 0;
+
+    rows.push({
+      vehicleId: vehicle._id,
+      regNumber: vehicle.regNumber,
+      name: vehicle.name,
+      revenue: parseFloat(revenue.toFixed(2)),
+      maintenanceCost: parseFloat(maintenanceCost.toFixed(2)),
+      fuelCost: parseFloat(fuelCost.toFixed(2)),
+      acquisitionCost: parseFloat(acquisitionCost.toFixed(2)),
+      roi
+    });
+  }
+  return rows;
+}
+
 // @route   GET api/reports/fuel-efficiency
 // @desc    Get fuel efficiency statistics per vehicle
 router.get('/fuel-efficiency', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
-    // Group completed trips by vehicle and calculate totals
     const trips = await Trip.find({ status: 'Completed' }).populate('vehicleId');
-    
+
     const statsMap = {};
     trips.forEach(trip => {
       if (!trip.vehicleId) return;
@@ -22,6 +59,7 @@ router.get('/fuel-efficiency', protect, allowRoles(['financial_analyst', 'fleet_
         statsMap[vId] = {
           vehicleId: vId,
           regNumber: trip.vehicleId.regNumber,
+          name: trip.vehicleId.name,
           distance: 0,
           fuel: 0
         };
@@ -32,7 +70,7 @@ router.get('/fuel-efficiency', protect, allowRoles(['financial_analyst', 'fleet_
 
     const report = Object.values(statsMap).map(item => ({
       ...item,
-      efficiency: item.fuel > 0 ? (item.distance / item.fuel).toFixed(2) : 0 // km per Litre
+      efficiency: item.fuel > 0 ? parseFloat((item.distance / item.fuel).toFixed(2)) : 0
     }));
 
     res.json(report);
@@ -50,26 +88,17 @@ router.get('/fleet-utilization', protect, allowRoles(['financial_analyst', 'flee
     const inShop = await Vehicle.countDocuments({ status: 'In Shop' });
     const available = await Vehicle.countDocuments({ status: 'Available' });
 
-    // Group total vehicles by type
     const vehicles = await Vehicle.find({ status: { $ne: 'Retired' } });
     const typeCount = {};
     vehicles.forEach(v => {
       typeCount[v.type] = (typeCount[v.type] || 0) + 1;
     });
 
-    const byType = Object.entries(typeCount).map(([type, count]) => ({
-      type,
-      count
-    }));
+    const byType = Object.entries(typeCount).map(([type, count]) => ({ type, count }));
 
     res.json({
       utilizationPercent: totalVehicles > 0 ? Math.round((onTrip / totalVehicles) * 100) : 0,
-      breakdown: {
-        onTrip,
-        inShop,
-        available,
-        totalVehicles
-      },
+      breakdown: { onTrip, inShop, available, totalVehicles },
       byType
     });
   } catch (error) {
@@ -168,7 +197,7 @@ const getROIReportData = async () => {
 };
 
 // @route   GET api/reports/roi
-// @desc    Calculate ROI details per vehicle
+// @desc    Get ROI statistics per vehicle
 router.get('/roi', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
     const report = await getROIReportData();
