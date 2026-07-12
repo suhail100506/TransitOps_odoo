@@ -24,4 +24,6 @@ const ExpenseSchema = new mongoose.Schema({
   timestamps: true
 });
 
+ExpenseSchema.index({ vehicleId: 1 });
+
 module.exports = mongoose.model('Expense', ExpenseSchema);

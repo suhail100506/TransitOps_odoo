@@ -52,4 +52,8 @@ const TripSchema = new mongoose.Schema({
   timestamps: true
 });
 
+TripSchema.index({ vehicleId: 1 });
+TripSchema.index({ driverId: 1 });
+TripSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Trip', TripSchema);
