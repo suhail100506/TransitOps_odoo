@@ -29,33 +29,38 @@ const Layout = () => {
     { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver'] },
     { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager'] },
     { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst'] },
-    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] }
+    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] },
+    { path: '/users', label: 'User Management', icon: UserIcon, role: ['admin'] }
   ];
 
   const roleRoutes = {
     fleet_manager: ['/vehicles', '/maintenance'],
     driver: ['/', '/trips'],
     safety_officer: ['/drivers'],
-    financial_analyst: ['/expenses', '/reports']
+    financial_analyst: ['/expenses', '/reports'],
+    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/users']
   };
 
   const defaultLanding = {
     fleet_manager: '/vehicles',
     driver: '/',
     safety_officer: '/drivers',
-    financial_analyst: '/expenses'
+    financial_analyst: '/expenses',
+    admin: '/users'
   };
 
   // If user is loaded, assert path permissions
   if (user) {
-    const allowedPaths = roleRoutes[user.role] || [];
-    if (!allowedPaths.includes(location.pathname)) {
-      const landing = defaultLanding[user.role] || '/';
-      return <Navigate to={landing} replace />;
+    if (user.role !== 'admin') {
+      const allowedPaths = roleRoutes[user.role] || [];
+      if (!allowedPaths.includes(location.pathname)) {
+        const landing = defaultLanding[user.role] || '/';
+        return <Navigate to={landing} replace />;
+      }
     }
   }
 
-  const allowedItems = navItems.filter((item) => item.role.includes(user?.role));
+  const allowedItems = navItems.filter((item) => item.role.includes(user?.role) || user?.role === 'admin');
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950/40 font-sans text-slate-900 dark:text-slate-100">
@@ -99,7 +104,7 @@ const Layout = () => {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200 leading-none mb-1.5">{user?.name || 'User'}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium capitalize truncate">
-                {user?.role === 'driver' ? 'dispatcher' : user?.role?.replace('_', ' ')}
+                {user?.role === 'driver' ? 'dispatcher' : user?.role === 'admin' ? 'Administrator' : user?.role?.replace('_', ' ')}
               </p>
             </div>
           </div>

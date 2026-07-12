@@ -10,7 +10,7 @@ import AddVehicleDialog from '../components/AddVehicleDialog';
 const Vehicles = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isManager = user?.role === 'fleet_manager';
+  const isManager = user?.role === 'fleet_manager' || user?.role === 'admin';
 
   // Filters state
   const [filters, setFilters] = useState({

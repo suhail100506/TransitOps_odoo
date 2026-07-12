@@ -10,11 +10,10 @@ import { Truck, AlertCircle } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('fleet_manager');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login, logout } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -23,13 +22,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const loggedInUser = await login(email, password);
-      if (loggedInUser.role !== role) {
-        logout();
-        setError('Access denied. Selected role does not match your account role.');
-      } else {
-        navigate('/');
-      }
+      await login(email, password);
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
     } finally {
@@ -83,32 +77,11 @@ const Login = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Access Role</Label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 md:text-sm text-slate-900 dark:text-white"
-                required
-              >
-                <option value="fleet_manager" className="bg-slate-900 text-white">Fleet Manager</option>
-                <option value="driver" className="bg-slate-900 text-white">Dispatcher</option>
-                <option value="safety_officer" className="bg-slate-900 text-white">Safety Officer</option>
-                <option value="financial_analyst" className="bg-slate-900 text-white">Financial Analyst</option>
-              </select>
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4 px-6 pb-8">
             <Button type="submit" className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-medium transition-all shadow-md active:scale-[0.98]" disabled={loading}>
               {loading ? 'Authenticating...' : 'Sign In'}
             </Button>
-            <div className="text-center text-sm text-slate-500 dark:text-slate-400">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold transition-all">
-                Sign up
-              </Link>
-            </div>
           </CardFooter>
         </form>
       </Card>

@@ -10,7 +10,7 @@ import AddDriverDialog from '../components/AddDriverDialog';
 const Drivers = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isManager = user?.role === 'fleet_manager';
+  const isManager = user?.role === 'fleet_manager' || user?.role === 'admin';
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');

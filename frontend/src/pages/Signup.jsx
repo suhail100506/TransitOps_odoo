@@ -103,6 +103,7 @@ const Signup = () => {
                 <option value="driver" className="bg-slate-900 text-white">Dispatcher</option>
                 <option value="safety_officer" className="bg-slate-900 text-white">Safety Officer</option>
                 <option value="financial_analyst" className="bg-slate-900 text-white">Financial Analyst</option>
+                <option value="admin" className="bg-slate-900 text-white">System Administrator</option>
               </select>
             </div>
           </CardContent>

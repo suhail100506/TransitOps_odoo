@@ -32,6 +32,14 @@ const seedData = async () => {
       role: 'fleet_manager'
     });
 
+    // Create Admin User
+    const adminUser = await User.create({
+      name: 'System Admin',
+      email: 'admin@transitops.com',
+      passwordHash: 'password',
+      role: 'fleet_manager'
+    });
+
     // Create Driver User
     const driverUser = await User.create({
       name: 'Driver Alex',
@@ -181,8 +189,10 @@ const seedData = async () => {
     console.log('Database seeded successfully!');
     console.log('--------------------------------------------------');
     console.log('Demo Credentials:');
-    console.log('Email:    manager@transitops.com');
-    console.log('Password: password');
+    console.log('Admin Email:   admin@transitops.com');
+    console.log('Manager Email: manager@transitops.com');
+    console.log('Driver Email:  alex@transitops.com');
+    console.log('Password:      password');
     console.log('--------------------------------------------------');
     
     mongoose.connection.close();
