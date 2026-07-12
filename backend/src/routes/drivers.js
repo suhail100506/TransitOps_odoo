@@ -9,7 +9,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const { status } = req.query;
     const query = { role: 'Driver' };
-    
+
     if (status) {
       if (status === 'Available') query.driverStatus = 'Available';
       else if (status === 'On Trip') query.driverStatus = 'On Trip';
@@ -37,7 +37,9 @@ router.get('/available', protect, async (req, res) => {
   }
 });
 
-router.post('/', protect, authorize('Admin', 'Dispatcher'), async (req, res) => {
+// @route   POST api/drivers
+// @desc    Create a new driver record
+router.post('/', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
     const { name, licenseNumber, licenseCategory, licenseExpiryDate, contactNumber, email, password } = req.body;
 
@@ -73,7 +75,9 @@ router.post('/', protect, authorize('Admin', 'Dispatcher'), async (req, res) => 
   }
 });
 
-router.put('/:id', protect, authorize('Admin', 'Dispatcher'), async (req, res) => {
+// @route   PUT api/drivers/:id
+// @desc    Update driver details (e.g. status, safety score)
+router.put('/:id', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
     if (req.body.status !== undefined) {
       req.body.driverStatus = req.body.status;

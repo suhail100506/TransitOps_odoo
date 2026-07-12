@@ -14,7 +14,7 @@ const seedData = async () => {
   try {
     console.log('Connecting to database for seeding...');
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/transitops');
-    
+
     console.log('Clearing existing collections...');
     await User.deleteMany({});
     await Vehicle.deleteMany({});
@@ -35,8 +35,17 @@ const seedData = async () => {
       phone: '+1 (555) 999-1234'
     });
 
-    const driver = await User.create({
-      name: 'Alex Johnson',
+    // Create Admin User
+    const adminUser = await User.create({
+      name: 'System Admin',
+      email: 'admin@transitops.com',
+      passwordHash: 'password',
+      role: 'fleet_manager'
+    });
+
+    // Create Driver User
+    const driverUser = await User.create({
+      name: 'Driver Alex',
       email: 'alex@transitops.com',
       passwordHash: 'password',
       role: 'Driver',
@@ -239,7 +248,7 @@ const seedData = async () => {
     console.log('Email:    manager@transitops.com');
     console.log('Password: password');
     console.log('--------------------------------------------------');
-    
+
     mongoose.connection.close();
   } catch (error) {
     console.error('Seeding failed:', error);

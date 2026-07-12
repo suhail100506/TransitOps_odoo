@@ -1,12 +1,12 @@
 const express = require('express');
 const FuelLog = require('../models/FuelLog');
-const { protect } = require('../middleware/auth');
+const { protect, allowRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
 // @route   POST api/fuel-logs
 // @desc    Log fuel intake for a vehicle
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
     const { vehicleId, liters, cost, date } = req.body;
 
@@ -29,7 +29,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   GET api/fuel-logs
 // @desc    Get all fuel logs
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
     const logs = await FuelLog.find({}).populate('vehicleId').sort({ date: -1 });
     res.json(logs);

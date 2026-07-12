@@ -3,13 +3,13 @@ const Trip = require('../models/Trip');
 const Vehicle = require('../models/Vehicle');
 const Maintenance = require('../models/Maintenance');
 const FuelLog = require('../models/FuelLog');
-const { protect } = require('../middleware/auth');
+const { protect, allowRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
 // @route   GET api/reports/fuel-efficiency
 // @desc    Get fuel efficiency statistics per vehicle
-router.get('/fuel-efficiency', protect, async (req, res) => {
+router.get('/fuel-efficiency', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
     // Group completed trips by vehicle and calculate totals
     const trips = await Trip.find({ status: 'Completed' }).populate('vehicleId');
@@ -43,7 +43,7 @@ router.get('/fuel-efficiency', protect, async (req, res) => {
 
 // @route   GET api/reports/fleet-utilization
 // @desc    Get current utilization stats
-router.get('/fleet-utilization', protect, async (req, res) => {
+router.get('/fleet-utilization', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
     const totalVehicles = await Vehicle.countDocuments({ status: { $ne: 'Retired' } });
     const onTrip = await Vehicle.countDocuments({ status: 'On Trip' });
@@ -77,47 +77,101 @@ router.get('/fleet-utilization', protect, async (req, res) => {
   }
 });
 
+// Helper to aggregate ROI report data
+const getROIReportData = async () => {
+  return await Vehicle.aggregate([
+    { $match: { status: { $ne: 'Retired' } } },
+    {
+      $lookup: {
+        from: 'fuellogs',
+        localField: '_id',
+        foreignField: 'vehicleId',
+        as: 'fuelLogs'
+      }
+    },
+    {
+      $lookup: {
+        from: 'maintenances',
+        localField: '_id',
+        foreignField: 'vehicleId',
+        as: 'maintenanceLogs'
+      }
+    },
+    {
+      $lookup: {
+        from: 'trips',
+        let: { vehicle_id: '$_id' },
+        pipeline: [
+          { 
+            $match: { 
+              $expr: { 
+                $and: [ 
+                  { $eq: ['$vehicleId', '$$vehicle_id'] }, 
+                  { $eq: ['$status', 'Completed'] } 
+                ] 
+              } 
+            } 
+          }
+        ],
+        as: 'completedTrips'
+      }
+    },
+    {
+      $project: {
+        regNumber: 1,
+        name: 1,
+        acquisitionCost: 1,
+        fuelCost: { $sum: '$fuelLogs.cost' },
+        maintenanceCost: { $sum: '$maintenanceLogs.cost' },
+        revenue: {
+          $multiply: [
+            { $sum: '$completedTrips.actualDistance' },
+            3.50
+          ]
+        }
+      }
+    },
+    {
+      $addFields: {
+        totalCosts: { $add: ['$fuelCost', '$maintenanceCost'] }
+      }
+    },
+    {
+      $project: {
+        vehicleId: '$_id',
+        regNumber: 1,
+        name: 1,
+        revenue: 1,
+        maintenanceCost: 1,
+        fuelCost: 1,
+        acquisitionCost: 1,
+        roi: {
+          $cond: {
+            if: { $gt: ['$acquisitionCost', 0] },
+            then: {
+              $round: [
+                {
+                  $multiply: [
+                    { $divide: [ { $subtract: ['$revenue', '$totalCosts'] }, '$acquisitionCost' ] },
+                    100
+                  ]
+                },
+                2
+              ]
+            },
+            else: 0
+          }
+        }
+      }
+    }
+  ]);
+};
+
 // @route   GET api/reports/roi
 // @desc    Calculate ROI details per vehicle
-router.get('/roi', protect, async (req, res) => {
+router.get('/roi', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
-    const vehicles = await Vehicle.find({ status: { $ne: 'Retired' } });
-    const report = [];
-
-    for (const vehicle of vehicles) {
-      // 1. Calculate Fuel Cost
-      const fuelLogs = await FuelLog.find({ vehicleId: vehicle._id });
-      const fuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
-
-      // 2. Calculate Maintenance Cost
-      const maintenanceLogs = await Maintenance.find({ vehicleId: vehicle._id });
-      const maintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
-
-      // 3. Estimate Revenue (e.g. $3.50 earned per completed trip km)
-      const trips = await Trip.find({ vehicleId: vehicle._id, status: 'Completed' });
-      const totalDistance = trips.reduce((sum, trip) => sum + (trip.actualDistance || 0), 0);
-      const revenue = totalDistance * 3.50; // rate per km
-
-      // 4. Acquisition Cost
-      const acquisitionCost = vehicle.acquisitionCost;
-
-      // 5. Calculate ROI: ((Revenue - Total Costs) / Acquisition Cost) * 100
-      const totalCosts = fuelCost + maintenanceCost;
-      const netProfit = revenue - totalCosts;
-      const roi = acquisitionCost > 0 ? ((netProfit) / acquisitionCost * 100).toFixed(2) : 0;
-
-      report.push({
-        vehicleId: vehicle._id,
-        regNumber: vehicle.regNumber,
-        name: vehicle.name,
-        revenue,
-        maintenanceCost,
-        fuelCost,
-        acquisitionCost,
-        roi: parseFloat(roi)
-      });
-    }
-
+    const report = await getROIReportData();
     res.json(report);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -126,29 +180,14 @@ router.get('/roi', protect, async (req, res) => {
 
 // @route   GET api/reports/export
 // @desc    Export ROI summary as CSV
-router.get('/export', protect, async (req, res) => {
+router.get('/export', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
-    const vehicles = await Vehicle.find({ status: { $ne: 'Retired' } });
+    const report = await getROIReportData();
     
     let csv = 'Vehicle,Reg Number,Revenue ($),Fuel Cost ($),Maintenance Cost ($),Acquisition Cost ($),ROI (%)\n';
     
-    for (const vehicle of vehicles) {
-      const fuelLogs = await FuelLog.find({ vehicleId: vehicle._id });
-      const fuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
-
-      const maintenanceLogs = await Maintenance.find({ vehicleId: vehicle._id });
-      const maintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
-
-      const trips = await Trip.find({ vehicleId: vehicle._id, status: 'Completed' });
-      const totalDistance = trips.reduce((sum, trip) => sum + (trip.actualDistance || 0), 0);
-      const revenue = totalDistance * 3.50;
-
-      const acquisitionCost = vehicle.acquisitionCost;
-      const totalCosts = fuelCost + maintenanceCost;
-      const netProfit = revenue - totalCosts;
-      const roi = acquisitionCost > 0 ? ((netProfit) / acquisitionCost * 100).toFixed(2) : 0;
-
-      csv += `"${vehicle.name}","${vehicle.regNumber}",${revenue.toFixed(2)},${fuelCost.toFixed(2)},${maintenanceCost.toFixed(2)},${acquisitionCost.toFixed(2)},${roi}\n`;
+    for (const vehicle of report) {
+      csv += `"${vehicle.name}","${vehicle.regNumber}",${vehicle.revenue.toFixed(2)},${vehicle.fuelCost.toFixed(2)},${vehicle.maintenanceCost.toFixed(2)},${vehicle.acquisitionCost.toFixed(2)},${vehicle.roi}\n`;
     }
 
     res.setHeader('Content-Type', 'text/csv');

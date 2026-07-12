@@ -10,17 +10,7 @@ import AddDriverDialog from '../components/AddDriverDialog';
 const Drivers = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Form states
-  const [name, setName] = useState('');
-  const [licenseNumber, setLicenseNumber] = useState('');
-  const [licenseCategory, setLicenseCategory] = useState('');
-  const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [formError, setFormError] = useState('');
-
-  const isManager = ['Admin', 'Dispatcher'].includes(user?.role);
+  const isManager = user?.role === 'fleet_manager' || user?.role === 'admin';
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
@@ -117,8 +107,8 @@ const Drivers = () => {
                 key={t.label}
                 onClick={() => setSelectedStatusFilter(isSelected ? null : t.label)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-250 cursor-pointer shadow-sm border ${isSelected
-                    ? 'ring-2 ring-offset-2 ring-cyan-500 scale-[0.98] ' + t.style
-                    : 'opacity-70 hover:opacity-100 ' + t.style
+                  ? 'ring-2 ring-offset-2 ring-cyan-500 scale-[0.98] ' + t.style
+                  : 'opacity-70 hover:opacity-100 ' + t.style
                   }`}
               >
                 {t.label}

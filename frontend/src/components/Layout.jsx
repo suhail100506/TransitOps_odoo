@@ -23,39 +23,44 @@ const Layout = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['Admin', 'Dispatcher', 'MaintenanceStaff', 'Driver'] },
-    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['Admin', 'Dispatcher'] },
-    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['Admin', 'Dispatcher'] },
-    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['Admin', 'Dispatcher', 'Driver'] },
-    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['Admin', 'MaintenanceStaff', 'Dispatcher'] },
-    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['Admin', 'Dispatcher'] },
-    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['Admin', 'Dispatcher', 'MaintenanceStaff'] }
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['driver'] },
+    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['fleet_manager'] },
+    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['safety_officer'] },
+    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver'] },
+    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager'] },
+    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst'] },
+    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] },
+    { path: '/users', label: 'User Management', icon: UserIcon, role: ['admin'] }
   ];
 
   const roleRoutes = {
-    Admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports'],
-    Dispatcher: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports'],
-    MaintenanceStaff: ['/', '/maintenance', '/reports'],
-    Driver: ['/', '/trips']
+    fleet_manager: ['/vehicles', '/maintenance'],
+    driver: ['/', '/trips'],
+    safety_officer: ['/drivers'],
+    financial_analyst: ['/expenses', '/reports'],
+    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/users']
   };
 
   const defaultLanding = {
-    Admin: '/vehicles',
-    Dispatcher: '/drivers',
-    MaintenanceStaff: '/maintenance',
-    Driver: '/'
+    fleet_manager: '/vehicles',
+    driver: '/',
+    safety_officer: '/drivers',
+    financial_analyst: '/expenses',
+    admin: '/users'
   };
 
   // If user is loaded, assert path permissions
   if (user) {
-    const allowedPaths = roleRoutes[user.role] || [];
-    if (!allowedPaths.includes(location.pathname)) {
-      const landing = defaultLanding[user.role] || '/';
-      return <Navigate to={landing} replace />;
+    if (user.role !== 'admin') {
+      const allowedPaths = roleRoutes[user.role] || [];
+      if (!allowedPaths.includes(location.pathname)) {
+        const landing = defaultLanding[user.role] || '/';
+        return <Navigate to={landing} replace />;
+      }
     }
   }
 
-  const allowedItems = navItems.filter((item) => item.role.includes(user?.role));
+  const allowedItems = navItems.filter((item) => item.role.includes(user?.role) || user?.role === 'admin');
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950/40 font-sans text-slate-900 dark:text-slate-100">
@@ -67,7 +72,7 @@ const Layout = () => {
           </div>
           <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">TransitOps</span>
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5">
           {allowedItems.map((item) => {
@@ -77,11 +82,10 @@ const Layout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
                     ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-semibold shadow-sm border-l-2 border-cyan-500 rounded-l-none pl-3'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/60 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-cyan-500' : 'text-slate-500 dark:text-slate-400'}`} />
                 {item.label}
@@ -99,7 +103,7 @@ const Layout = () => {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200 leading-none mb-1.5">{user?.name || 'User'}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium capitalize truncate">
-                {user?.role === 'Admin' ? 'Fleet Manager' : user?.role === 'MaintenanceStaff' ? 'Maintenance Staff' : user?.role}
+                {user?.role === 'driver' ? 'dispatcher' : user?.role === 'admin' ? 'Administrator' : user?.role?.replace('_', ' ')}
               </p>
             </div>
           </div>

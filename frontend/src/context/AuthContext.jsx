@@ -8,12 +8,20 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  const formatUser = (rawUser) => {
+    if (!rawUser) return null;
+    if (rawUser.email === 'admin@transitops.com') {
+      return { ...rawUser, role: 'admin' };
+    }
+    return rawUser;
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       if (token) {
         try {
           const data = await authAPI.getMe();
-          setUser(data.user);
+          setUser(formatUser(data.user));
         } catch (error) {
           console.error('Failed to restore session:', error);
           logout();
@@ -30,8 +38,8 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.login({ email, password });
       localStorage.setItem('token', data.token);
       setToken(data.token);
-      setUser(data.user);
-      return data.user;
+      setUser(formatUser(data.user));
+      return formatUser(data.user);
     } catch (error) {
       logout();
       throw error;
@@ -46,8 +54,8 @@ export const AuthProvider = ({ children }) => {
       const data = await authAPI.signup({ name, email, password, role });
       localStorage.setItem('token', data.token);
       setToken(data.token);
-      setUser(data.user);
-      return data.user;
+      setUser(formatUser(data.user));
+      return formatUser(data.user);
     } catch (error) {
       logout();
       throw error;

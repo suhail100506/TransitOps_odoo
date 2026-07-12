@@ -23,4 +23,6 @@ const FuelLogSchema = new mongoose.Schema({
   timestamps: true
 });
 
+FuelLogSchema.index({ vehicleId: 1 });
+
 module.exports = mongoose.model('FuelLog', FuelLogSchema);

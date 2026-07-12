@@ -55,13 +55,13 @@ const VehicleSchema = new mongoose.Schema({
 });
 
 // Sync registrationNumber <-> regNumber, capacity <-> maxLoadCapacity before validate
-VehicleSchema.pre('validate', function(next) {
+VehicleSchema.pre('validate', function (next) {
   if (this.regNumber && !this.registrationNumber) {
     this.registrationNumber = this.regNumber;
   } else if (this.registrationNumber && !this.regNumber) {
     this.regNumber = this.registrationNumber;
   }
-  
+
   if (this.maxLoadCapacity !== undefined && this.capacity === undefined) {
     this.capacity = this.maxLoadCapacity;
   } else if (this.capacity !== undefined && this.maxLoadCapacity === undefined) {
@@ -79,5 +79,6 @@ VehicleSchema.pre('validate', function(next) {
 
   next();
 });
+VehicleSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Vehicle', VehicleSchema);
