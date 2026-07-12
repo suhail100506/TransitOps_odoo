@@ -1,7 +1,7 @@
 const express = require('express');
 const Maintenance = require('../models/Maintenance');
 const Vehicle = require('../models/Vehicle');
-const { protect } = require('../middleware/auth');
+const { protect, allowRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST api/maintenance
 // @desc    Open a maintenance record (puts vehicle in In Shop status)
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, allowRoles(['fleet_manager']), async (req, res) => {
   try {
     const { vehicleId, description, cost } = req.body;
 
@@ -61,7 +61,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   POST api/maintenance/:id/close
 // @desc    Close maintenance record (releases vehicle to Available)
-router.post('/:id/close', protect, async (req, res) => {
+router.post('/:id/close', protect, allowRoles(['fleet_manager']), async (req, res) => {
   try {
     const record = await Maintenance.findById(req.params.id);
     if (!record) {

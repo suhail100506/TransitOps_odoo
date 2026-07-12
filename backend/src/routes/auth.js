@@ -2,8 +2,16 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const rateLimiter = require('../middleware/rateLimiter');
 
 const router = express.Router();
+
+// Limit sensitive auth actions to 10 requests per 15 minutes
+const authLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many auth attempts from this IP, please try again after 15 minutes.'
+});
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -14,10 +22,11 @@ const generateToken = (id) => {
 
 // @route   POST api/auth/signup
 // @desc    Register a new user
-router.post('/signup', async (req, res) => {
+// router.post('/signup', authLimiter, async (req, res) => {
+router.post('/signup', authLimiter, async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
-
+    
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Please provide all fields' });
     }
@@ -53,7 +62,7 @@ router.post('/signup', async (req, res) => {
 
 // @route   POST api/auth/login
 // @desc    Authenticate user and get token
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 

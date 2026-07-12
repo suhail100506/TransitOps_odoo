@@ -2,7 +2,8 @@ const express = require('express');
 const Trip = require('../models/Trip');
 const Vehicle = require('../models/Vehicle');
 const Driver = require('../models/Driver');
-const { protect } = require('../middleware/auth');
+const Maintenance = require('../models/Maintenance');
+const { protect, allowRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ router.get('/', protect, async (req, res) => {
 
 // @route   POST api/trips
 // @desc    Create a new trip (Draft)
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, allowRoles(['driver', 'fleet_manager']), async (req, res) => {
   try {
     const { source, destination, vehicleId, driverId, cargoWeight, plannedDistance } = req.body;
 
@@ -64,7 +65,7 @@ router.post('/', protect, async (req, res) => {
 
 // @route   POST api/trips/:id/dispatch
 // @desc    Dispatch a trip (Start journey)
-router.post('/:id/dispatch', protect, async (req, res) => {
+router.post('/:id/dispatch', protect, allowRoles(['driver', 'fleet_manager']), async (req, res) => {
   try {
     const trip = await Trip.findById(req.params.id);
     if (!trip) {
@@ -114,7 +115,7 @@ router.post('/:id/dispatch', protect, async (req, res) => {
 
 // @route   POST api/trips/:id/complete
 // @desc    Complete a trip (requires fuel and odometer logs)
-router.post('/:id/complete', protect, async (req, res) => {
+router.post('/:id/complete', protect, allowRoles(['driver', 'fleet_manager']), async (req, res) => {
   try {
     const { finalOdometer, fuelConsumed } = req.body;
 
@@ -148,9 +149,18 @@ router.post('/:id/complete', protect, async (req, res) => {
     // Calculate actual distance
     const actualDistance = finalOdometer - vehicle.odometer;
 
+    // Check if odometer crossed a 10,000 km milestone (10k, 20k, 30k, etc.)
+    const milestoneBefore = Math.floor(vehicle.odometer / 10000);
+    const milestoneAfter = Math.floor(finalOdometer / 10000);
+    const crossedMilestone = milestoneAfter > milestoneBefore && milestoneAfter > 0;
+
     // Update vehicle odometer and status
     vehicle.odometer = finalOdometer;
-    vehicle.status = 'Available';
+    if (crossedMilestone) {
+      vehicle.status = 'In Shop';
+    } else {
+      vehicle.status = 'Available';
+    }
     await vehicle.save();
 
     // Update driver status
@@ -164,6 +174,16 @@ router.post('/:id/complete', protect, async (req, res) => {
     trip.completedAt = new Date();
     await trip.save();
 
+    // If milestone crossed, automatically trigger an Open maintenance ticket
+    if (crossedMilestone) {
+      await Maintenance.create({
+        vehicleId: vehicle._id,
+        description: `Automated Preventive Maintenance Alert (Odometer crossed ${milestoneAfter * 10000} km milestone)`,
+        cost: 0,
+        status: 'Open'
+      });
+    }
+
     res.json(trip);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -172,7 +192,7 @@ router.post('/:id/complete', protect, async (req, res) => {
 
 // @route   POST api/trips/:id/cancel
 // @desc    Cancel a trip (releases vehicle/driver if dispatched)
-router.post('/:id/cancel', protect, async (req, res) => {
+router.post('/:id/cancel', protect, allowRoles(['driver', 'fleet_manager']), async (req, res) => {
   try {
     const trip = await Trip.findById(req.params.id);
     if (!trip) {

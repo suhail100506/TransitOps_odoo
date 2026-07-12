@@ -42,4 +42,6 @@ const DriverSchema = new mongoose.Schema({
   timestamps: true
 });
 
+DriverSchema.index({ status: 1 });
+
 module.exports = mongoose.model('Driver', DriverSchema);

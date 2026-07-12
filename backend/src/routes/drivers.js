@@ -37,7 +37,7 @@ router.get('/available', protect, async (req, res) => {
 
 // @route   POST api/drivers
 // @desc    Create a new driver record
-router.post('/', protect, allowRoles(['fleet_manager']), async (req, res) => {
+router.post('/', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
     const { name, licenseNumber, licenseCategory, licenseExpiryDate, contactNumber } = req.body;
 
@@ -68,7 +68,7 @@ router.post('/', protect, allowRoles(['fleet_manager']), async (req, res) => {
 
 // @route   PUT api/drivers/:id
 // @desc    Update driver details (e.g. status, safety score)
-router.put('/:id', protect, allowRoles(['fleet_manager']), async (req, res) => {
+router.put('/:id', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
     const driver = await Driver.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
