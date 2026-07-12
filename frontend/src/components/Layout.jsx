@@ -1,4 +1,5 @@
-import { Outlet, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -10,7 +11,8 @@ import {
   BarChart3,
   LogOut,
   User as UserIcon,
-  Settings
+  Loader2,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 const Layout = () => {
@@ -24,22 +26,23 @@ const Layout = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['driver', 'admin'] },
-    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['fleet_manager', 'admin'] },
-    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['safety_officer', 'admin'] },
-    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver', 'admin'] },
-    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager', 'admin'] },
-    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst', 'admin'] },
-    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst', 'admin'] },
-    { path: '/settings', label: 'User Settings', icon: Settings, role: ['admin'] }
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['driver'] },
+    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['fleet_manager'] },
+    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['safety_officer'] },
+    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver'] },
+    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager'] },
+    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst'] },
+    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] },
+    { path: '/users', label: 'User Management', icon: UserIcon, role: ['admin'] },
+    { path: '/settings', label: 'Settings', icon: SettingsIcon, role: ['driver', 'fleet_manager', 'safety_officer', 'financial_analyst', 'admin'] }
   ];
 
   const roleRoutes = {
-    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/settings'],
-    fleet_manager: ['/vehicles', '/maintenance'],
-    driver: ['/', '/trips'],
-    safety_officer: ['/drivers'],
-    financial_analyst: ['/expenses', '/reports']
+    fleet_manager: ['/vehicles', '/maintenance', '/settings'],
+    driver: ['/', '/trips', '/settings'],
+    safety_officer: ['/drivers', '/settings'],
+    financial_analyst: ['/expenses', '/reports', '/settings'],
+    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/users', '/settings']
   };
 
   const defaultLanding = {
@@ -47,19 +50,30 @@ const Layout = () => {
     fleet_manager: '/vehicles',
     driver: '/',
     safety_officer: '/drivers',
-    financial_analyst: '/expenses'
+    financial_analyst: '/expenses',
+    admin: '/users'
   };
 
-  // If user is loaded, assert path permissions
-  if (user) {
-    const allowedPaths = roleRoutes[user.role] || [];
-    if (!allowedPaths.includes(location.pathname)) {
+  const allowedPaths = user ? (roleRoutes[user.role] || []) : [];
+  const isAuthorized = !user || user.role === 'admin' || allowedPaths.includes(location.pathname);
+
+  // Assert path permissions
+  useEffect(() => {
+    if (user && !isAuthorized) {
       const landing = defaultLanding[user.role] || '/';
-      return <Navigate to={landing} replace />;
+      navigate(landing, { replace: true });
     }
+  }, [user, isAuthorized, navigate]);
+
+  if (user && !isAuthorized) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-2 bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
   }
 
-  const allowedItems = navItems.filter((item) => item.role.includes(user?.role));
+  const allowedItems = navItems.filter((item) => item.role.includes(user?.role) || user?.role === 'admin');
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950/40 font-sans text-slate-900 dark:text-slate-100">
@@ -103,7 +117,7 @@ const Layout = () => {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200 leading-none mb-1.5">{user?.name || 'User'}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium capitalize truncate">
-                {user?.role === 'driver' ? 'dispatcher' : user?.role?.replace('_', ' ')}
+                {user?.role === 'driver' ? 'dispatcher' : user?.role === 'admin' ? 'Administrator' : user?.role?.replace('_', ' ')}
               </p>
             </div>
           </div>

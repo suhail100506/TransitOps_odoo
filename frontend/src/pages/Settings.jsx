@@ -1,485 +1,177 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
-import { authAPI } from '../services/api';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import {
-  Users,
-  AlertCircle,
-  CheckCircle2,
-  Loader2,
-  Shield,
-  Edit,
-  Trash2,
-  Key,
-  Check,
-  X
-} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertCircle, CheckCircle2, ShieldAlert, Save } from 'lucide-react';
 
 const Settings = () => {
-  const { user: currentUser } = useAuth();
-  const queryClient = useQueryClient();
-
-  // Create User Form states
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('driver');
+  // General settings local state initialized from localStorage
+  const [depotName, setDepotName] = useState(() => localStorage.getItem('setting_depot_name') || '');
+  const [currency, setCurrency] = useState(() => localStorage.getItem('setting_currency') || '');
+  const [distanceUnit, setDistanceUnit] = useState(() => localStorage.getItem('setting_distance_unit') || '');
   
-  // Edit User Modal states
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [editName, setEditName] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editRole, setEditRole] = useState('');
-  const [editStatus, setEditStatus] = useState('Active');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  // Fetch Users List
-  const { data: users, isLoading: usersLoading } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const res = await authAPI.getUsers();
-      return res;
-    },
-    enabled: currentUser?.role === 'admin'
-  });
-
-  // Mutations
-  const createUserMutation = useMutation({
-    mutationFn: authAPI.createUser,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setSuccess(`User "${name}" has been successfully provisioned.`);
-      setName('');
-      setEmail('');
-      setPassword('');
-      setRole('driver');
-    },
-    onError: (err) => {
-      setError(err.response?.data?.error || 'Failed to create user.');
-    }
-  });
-
-  const updateUserMutation = useMutation({
-    mutationFn: ({ id, data }) => authAPI.updateUser(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setSuccess('User account updated successfully.');
-      setIsEditDialogOpen(false);
-      setEditingUser(null);
-    },
-    onError: (err) => {
-      setError(err.response?.data?.error || 'Failed to update user.');
-    }
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: authAPI.deleteUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setSuccess('User account deleted successfully.');
-    },
-    onError: (err) => {
-      setError(err.response?.data?.error || 'Failed to delete user.');
-    }
-  });
-
-  const handleCreateUser = (e) => {
+  const handleSaveSettings = (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (!name || !email || !password || !role) {
-      setError('Please fill in all required fields.');
-      return;
-    }
-
-    createUserMutation.mutate({ name, email, password, role });
+    localStorage.setItem('setting_depot_name', depotName || 'Gandhinagar Depot GJ4');
+    localStorage.setItem('setting_currency', currency || 'INR (Rs)');
+    localStorage.setItem('setting_distance_unit', distanceUnit || 'Kilometers');
+    setSuccessMsg('General settings saved successfully!');
+    setTimeout(() => setSuccessMsg(''), 4000);
   };
 
-  const handleOpenEdit = (userToEdit) => {
-    setError('');
-    setSuccess('');
-    setEditingUser(userToEdit);
-    setEditName(userToEdit.name);
-    setEditEmail(userToEdit.email);
-    setEditRole(userToEdit.role);
-    setEditStatus(userToEdit.status);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!editName || !editEmail || !editRole) {
-      setError('Name, email, and role are required.');
-      return;
+  // RBAC matrix definition matching the mockup
+  const rbacData = [
+    {
+      role: 'Fleet Manager',
+      fleet: 'check',
+      drivers: 'check',
+      trips: 'dash',
+      fuel: 'dash',
+      analytics: 'check'
+    },
+    {
+      role: 'Dispatcher',
+      fleet: 'view',
+      drivers: 'dash',
+      trips: 'check',
+      fuel: 'dash',
+      analytics: 'dash'
+    },
+    {
+      role: 'Safety Officer',
+      fleet: 'dash',
+      drivers: 'check',
+      trips: 'view',
+      fuel: 'dash',
+      analytics: 'dash'
+    },
+    {
+      role: 'Financial Analyst',
+      fleet: 'view',
+      drivers: 'dash',
+      trips: 'dash',
+      fuel: 'check',
+      analytics: 'check'
     }
+  ];
 
-    updateUserMutation.mutate({
-      id: editingUser._id,
-      data: {
-        name: editName,
-        email: editEmail,
-        role: editRole,
-        status: editStatus
-      }
-    });
-  };
-
-  const handleDeleteUser = (userToDelete) => {
-    setError('');
-    setSuccess('');
-
-    if (userToDelete._id === currentUser.id) {
-      setError('Cannot delete your own administrator account.');
-      return;
-    }
-
-    if (window.confirm(`Are you sure you want to permanently delete user "${userToDelete.name}"?`)) {
-      deleteUserMutation.mutate(userToDelete._id);
-    }
-  };
-
-  const getRoleBadgeColor = (roleStr) => {
-    switch (roleStr) {
-      case 'admin':
-        return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
-      case 'fleet_manager':
-        return 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20';
-      case 'safety_officer':
-        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
-      case 'financial_analyst':
-        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+  const renderCell = (val) => {
+    switch (val) {
+      case 'check':
+        return <span className="text-emerald-500 font-bold text-base">✓</span>;
+      case 'view':
+        return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 capitalize">view</span>;
+      case 'dash':
       default:
-        return 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20';
+        return <span className="text-slate-350 dark:text-slate-600 font-medium">—</span>;
     }
   };
-
-  if (currentUser?.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6">
-        <Shield className="h-16 w-16 text-red-500 mb-4 animate-pulse" />
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h2>
-        <p className="text-slate-500 dark:text-slate-400 max-w-md">
-          Only system administrators can access this configuration panel.
-        </p>
-      </div>
-    );
-  }
-
-  const loading = createUserMutation.isPending || updateUserMutation.isPending || deleteUserMutation.isPending;
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
+    <div className="space-y-8 animate-fade-in">
+      {/* Header section */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">System Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Manage system configurations, user directory, and role provisioning policies.
-        </p>
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Settings</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Configure general registry options and view access control configurations.</p>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Account Creation form */}
-        <div className="space-y-6 lg:col-span-1">
-          <Card className="shadow-md border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white/80 dark:bg-slate-950/70 backdrop-blur-md">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                <Users className="h-5 w-5 text-cyan-500" />
-                Provision User
-              </CardTitle>
-              <CardDescription className="text-slate-500 dark:text-slate-400 text-xs">
-                Register staff and configure their role-based credentials.
-              </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleCreateUser}>
-              <CardContent className="space-y-4">
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-500/10 dark:bg-red-500/25 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs animate-shake">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-                {success && (
-                  <div className="flex items-center gap-2 p-3 bg-emerald-500/10 dark:bg-emerald-500/25 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" />
-                    <span>{success}</span>
-                  </div>
-                )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: GENERAL Form */}
+        <div className="lg:col-span-5 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white dark:bg-slate-900/50 shadow-sm p-6 space-y-6">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">General</h2>
+            <p className="text-[11px] text-slate-550 mt-0.5">Depot details, operating currencies, and metrics system.</p>
+          </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Full Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g. John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-9"
-                    required
-                  />
-                </div>
+          <form onSubmit={handleSaveSettings} className="space-y-5">
+            {successMsg && (
+              <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>{successMsg}</span>
+              </div>
+            )}
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="name@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-9"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="password" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Temporary Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-9"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="role" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">System Role</Label>
-                  <select
-                    id="role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="flex h-9 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3 py-1 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
-                    required
-                  >
-                    <option value="driver" className="bg-slate-900 text-white">Dispatcher (Driver)</option>
-                    <option value="fleet_manager" className="bg-slate-900 text-white">Fleet Manager</option>
-                    <option value="safety_officer" className="bg-slate-900 text-white">Safety Officer</option>
-                    <option value="financial_analyst" className="bg-slate-900 text-white">Financial Analyst</option>
-                    <option value="admin" className="bg-slate-900 text-white">System Administrator</option>
-                  </select>
-                </div>
-
-                <Button type="submit" className="w-full h-9 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-medium transition-all shadow-md active:scale-[0.98] mt-2" disabled={loading}>
-                  {createUserMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Provisioning...
-                    </>
-                  ) : (
-                    'Provision User'
-                  )}
-                </Button>
-              </CardContent>
-            </form>
-          </Card>
-        </div>
-
-        {/* Right Column: User Management Table */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="shadow-md border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white/80 dark:bg-slate-950/70 backdrop-blur-md">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">Active User Directory</CardTitle>
-              <CardDescription className="text-slate-500 dark:text-slate-400 text-xs">
-                Inspect registered users, manage permission levels, or deactivate accounts.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {usersLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-                </div>
-              ) : (
-                <div className="border border-slate-150 dark:border-slate-800/80 rounded-xl overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-slate-50 dark:bg-slate-900/60">
-                      <TableRow>
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Name</TableHead>
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Email</TableHead>
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Role</TableHead>
-                        <TableHead className="font-semibold text-slate-700 dark:text-slate-300">Status</TableHead>
-                        <TableHead className="text-right font-semibold text-slate-700 dark:text-slate-300">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users && users.map((u) => (
-                        <TableRow key={u._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
-                          <TableCell className="font-medium text-slate-900 dark:text-white">{u.name}</TableCell>
-                          <TableCell className="text-slate-500 dark:text-slate-400">{u.email}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide leading-none ${getRoleBadgeColor(u.role)}`}>
-                              {u.role === 'driver' ? 'dispatcher' : u.role.replace('_', ' ')}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${
-                              u.status === 'Active'
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                                : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20'
-                            }`}>
-                              {u.status === 'Active' ? (
-                                <Check className="h-3 w-3" />
-                              ) : (
-                                <X className="h-3 w-3" />
-                              )}
-                              {u.status}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-8 w-8 rounded-lg hover:border-cyan-500/30 hover:text-cyan-500"
-                                onClick={() => handleOpenEdit(u)}
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className={`h-8 w-8 rounded-lg ${
-                                  u._id === currentUser.id
-                                    ? 'opacity-40 cursor-not-allowed'
-                                    : 'hover:border-red-500/30 hover:text-red-500'
-                                }`}
-                                onClick={() => handleDeleteUser(u)}
-                                disabled={u._id === currentUser.id}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Edit User Modal Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white dark:bg-slate-950 p-6 shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Key className="h-5 w-5 text-cyan-500" />
-              Modify User Profile
-            </DialogTitle>
-            <DialogDescription className="text-slate-500 dark:text-slate-400 text-xs">
-              Make changes to user properties, change status, or assign permission roles.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
             <div className="space-y-1.5">
-              <Label htmlFor="editName" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Full Name</Label>
+              <Label htmlFor="depotName" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Depot Name</Label>
               <Input
-                id="editName"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-full rounded-xl border-slate-200 dark:border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-9"
-                required
+                id="depotName"
+                value={depotName}
+                onChange={(e) => setDepotName(e.target.value)}
+                placeholder="Gandhinagar Depot GJ4"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-11 text-xs font-semibold"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="editEmail" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email Address</Label>
+              <Label htmlFor="currency" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Currency</Label>
               <Input
-                id="editEmail"
-                type="email"
-                value={editEmail}
-                onChange={(e) => setEditEmail(e.target.value)}
-                className="w-full rounded-xl border-slate-200 dark:border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-9"
-                required
+                id="currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                placeholder="INR (Rs)"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-11 text-xs font-semibold"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="editRole" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Role</Label>
-                <select
-                  id="editRole"
-                  value={editRole}
-                  onChange={(e) => setEditRole(e.target.value)}
-                  className="flex h-9 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
-                  required
-                  disabled={editingUser?._id === currentUser.id}
-                >
-                  <option value="driver" className="bg-slate-900 text-white">Dispatcher (Driver)</option>
-                  <option value="fleet_manager" className="bg-slate-900 text-white">Fleet Manager</option>
-                  <option value="safety_officer" className="bg-slate-900 text-white">Safety Officer</option>
-                  <option value="financial_analyst" className="bg-slate-900 text-white">Financial Analyst</option>
-                  <option value="admin" className="bg-slate-900 text-white">System Administrator</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="editStatus" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</Label>
-                <select
-                  id="editStatus"
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
-                  className="flex h-9 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
-                  required
-                  disabled={editingUser?._id === currentUser.id}
-                >
-                  <option value="Active" className="bg-slate-900 text-white">Active</option>
-                  <option value="Inactive" className="bg-slate-900 text-white">Inactive</option>
-                </select>
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="distanceUnit" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Distance Unit</Label>
+              <Input
+                id="distanceUnit"
+                value={distanceUnit}
+                onChange={(e) => setDistanceUnit(e.target.value)}
+                placeholder="Kilometers"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-11 text-xs font-semibold"
+              />
             </div>
 
-            <DialogFooter className="pt-2 flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 rounded-xl px-4 text-xs font-semibold"
-                onClick={() => setIsEditDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="h-9 rounded-xl px-4 text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950"
-                disabled={updateUserMutation.isPending}
-              >
-                {updateUserMutation.isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </DialogFooter>
+            <Button
+              type="submit"
+              className="w-full flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-sm mt-6 cursor-pointer transition-all active:scale-[0.98]"
+            >
+              <Save className="h-4 w-4" /> Save changes
+            </Button>
           </form>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* Right Column: ROLE-BASED ACCESS (RBAC) */}
+        <div className="lg:col-span-7 border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden p-6 space-y-4">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Role-Based Access (RBAC)</h2>
+            <p className="text-[11px] text-slate-550 mt-0.5">Authorization permissions matrix mapped across operational departments.</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/60 border-b border-slate-200/60 dark:border-slate-800/80">
+                <TableRow>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3 px-4">Role</TableHead>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3 px-4 text-center">Fleet</TableHead>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3 px-4 text-center">Drivers</TableHead>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3 px-4 text-center">Trips</TableHead>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3 px-4 text-center">Fuel/Exp.</TableHead>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3 px-4 text-center">Analytics</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rbacData.map((row) => (
+                  <TableRow key={row.role} className="hover:bg-slate-50/30 dark:hover:bg-slate-900/30 border-b border-slate-100 dark:border-slate-900/80 last:border-0">
+                    <TableCell className="font-bold text-slate-850 dark:text-slate-300 py-3 px-4">{row.role}</TableCell>
+                    <TableCell className="text-center py-3 px-4">{renderCell(row.fleet)}</TableCell>
+                    <TableCell className="text-center py-3 px-4">{renderCell(row.drivers)}</TableCell>
+                    <TableCell className="text-center py-3 px-4">{renderCell(row.trips)}</TableCell>
+                    <TableCell className="text-center py-3 px-4">{renderCell(row.fuel)}</TableCell>
+                    <TableCell className="text-center py-3 px-4">{renderCell(row.analytics)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -225,8 +225,10 @@ const seedData = async () => {
     console.log('Database seeded successfully!');
     console.log('--------------------------------------------------');
     console.log('Demo Credentials:');
-    console.log('Email:    manager@transitops.com');
-    console.log('Password: password');
+    console.log('Admin Email:   admin@transitops.com');
+    console.log('Manager Email: manager@transitops.com');
+    console.log('Driver Email:  alex@transitops.com');
+    console.log('Password:      password');
     console.log('--------------------------------------------------');
     console.log('Notes:');
     console.log('  Marcus Wright - expired license (red highlight demo)');

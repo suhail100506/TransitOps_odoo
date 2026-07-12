@@ -9,6 +9,10 @@ import Trips from './pages/Trips';
 import Maintenance from './pages/Maintenance';
 import Expenses from './pages/Expenses';
 import Reports from './pages/Reports';
+<<<<<<< HEAD
+=======
+import UsersManagement from './pages/UsersManagement';
+>>>>>>> dev
 import Settings from './pages/Settings';
 import { Loader2 } from 'lucide-react';
 
@@ -54,6 +58,7 @@ function App() {
         <Route path="maintenance" element={<Maintenance />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="users" element={<UsersManagement />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
