@@ -2,9 +2,11 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const Vehicle = require('./models/Vehicle');
-const Driver = require('./models/Driver');
 const Trip = require('./models/Trip');
-const Maintenance = require('./models/Maintenance');
+const TripStatusHistory = require('./models/TripStatusHistory');
+const MaintenanceTicket = require('./models/MaintenanceTicket');
+const MaintenanceLog = require('./models/MaintenanceLog');
+const MaintenanceSchedule = require('./models/MaintenanceSchedule');
 const FuelLog = require('./models/FuelLog');
 const Expense = require('./models/Expense');
 
@@ -13,156 +15,210 @@ const seedData = async () => {
     console.log('Connecting to database for seeding...');
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/transitops');
     
-    // Clear existing data
     console.log('Clearing existing collections...');
     await User.deleteMany({});
     await Vehicle.deleteMany({});
-    await Driver.deleteMany({});
     await Trip.deleteMany({});
-    await Maintenance.deleteMany({});
+    await TripStatusHistory.deleteMany({});
+    await MaintenanceTicket.deleteMany({});
+    await MaintenanceLog.deleteMany({});
+    await MaintenanceSchedule.deleteMany({});
     await FuelLog.deleteMany({});
     await Expense.deleteMany({});
 
-    console.log('Creating seed users...');
-    // Create Manager User
-    const manager = await User.create({
+    console.log('Creating users (Admin & Drivers)...');
+    const admin = await User.create({
       name: 'Manager Joe',
       email: 'manager@transitops.com',
-      passwordHash: 'password', // Pre-save hooks hashes this
-      role: 'fleet_manager'
+      passwordHash: 'password',
+      role: 'Admin',
+      phone: '+1 (555) 999-1234'
     });
 
-    // Create Driver User
-    const driverUser = await User.create({
-      name: 'Driver Alex',
+    const driver = await User.create({
+      name: 'Alex Johnson',
       email: 'alex@transitops.com',
       passwordHash: 'password',
-      role: 'driver'
+      role: 'Driver',
+      phone: '+1 (555) 123-9876',
+      licenseNumber: 'DL-A10983',
+      licenseCategory: 'Heavy Rig (Class A)',
+      licenseExpiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      contactNumber: '+1 (555) 123-9876',
+      driverStatus: 'Available',
+      safetyScore: 95
     });
 
-    console.log('Creating seed vehicles...');
+    const driver2 = await User.create({
+      name: 'Sarah Connor',
+      email: 'sarah@transitops.com',
+      passwordHash: 'password',
+      role: 'Driver',
+      phone: '+1 (555) 234-5678',
+      licenseNumber: 'DL-B84310',
+      licenseCategory: 'Commercial (Class B)',
+      licenseExpiryDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+      contactNumber: '+1 (555) 234-5678',
+      driverStatus: 'Available',
+      safetyScore: 88
+    });
+
+    console.log('Creating vehicles...');
     const v1 = await Vehicle.create({
-      regNumber: 'VAN-05',
+      registrationNumber: 'VAN-05',
       name: 'Mercedes Sprinter',
       model: '2023 Cargo',
-      type: 'Van',
-      maxLoadCapacity: 1500,
+      type: 'VAN',
+      capacity: 1500,
       odometer: 12500,
       acquisitionCost: 45000,
-      status: 'On Trip' // For the active trip
+      status: 'AVAILABLE'
     });
 
     const v2 = await Vehicle.create({
-      regNumber: 'TRK-10',
+      registrationNumber: 'TRK-10',
       name: 'Volvo FH16',
       model: '2022 Heavy Duty',
-      type: 'Semi-Truck',
-      maxLoadCapacity: 18000,
+      type: 'TRUCK',
+      capacity: 18000,
       odometer: 84300,
       acquisitionCost: 140000,
-      status: 'In Shop' // For the maintenance record
+      status: 'UNDER_MAINTENANCE'
     });
 
     const v3 = await Vehicle.create({
-      regNumber: 'BOX-03',
+      registrationNumber: 'BOX-03',
       name: 'Ford Transit Box',
       model: '2024 Cargo',
-      type: 'Box Truck',
-      maxLoadCapacity: 3500,
+      type: 'TRUCK',
+      capacity: 3500,
       odometer: 5400,
       acquisitionCost: 55000,
-      status: 'Available'
+      status: 'AVAILABLE'
     });
 
-    console.log('Creating seed drivers...');
-    const d1 = await Driver.create({
-      name: 'Alex Johnson',
-      licenseNumber: 'DL-A10983',
-      licenseCategory: 'Heavy Rig (Class A)',
-      licenseExpiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-      contactNumber: '+1 (555) 123-9876',
-      safetyScore: 95,
-      status: 'On Trip' // Assigned to active trip
-    });
-
-    const d2 = await Driver.create({
-      name: 'Sarah Connor',
-      licenseNumber: 'DL-B84310',
-      licenseCategory: 'Commercial (Class B)',
-      licenseExpiryDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000), // 6 months from now
-      contactNumber: '+1 (555) 234-5678',
-      safetyScore: 88,
-      status: 'Available'
-    });
-
-    const d3 = await Driver.create({
-      name: 'Marcus Wright',
-      licenseNumber: 'DL-C11239',
-      licenseCategory: 'Light Commercial',
-      licenseExpiryDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Expired 30 days ago
-      contactNumber: '+1 (555) 345-6789',
-      safetyScore: 65,
-      status: 'Available'
-    });
-
-    console.log('Creating seed trips...');
-    // 1. Completed Trip
-    const tripCompleted = await Trip.create({
-      source: 'Chicago, IL',
-      destination: 'Detroit, MI',
+    console.log('Creating trips...');
+    const trip1 = await Trip.create({
+      tripCode: 'TRP-000001',
+      routeName: 'Chicago to Detroit',
+      origin: { name: 'Chicago, IL', lat: 41.8781, lng: -87.6298 },
+      destination: { name: 'Detroit, MI', lat: 42.3314, lng: -83.0458 },
+      scheduledDeparture: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() - 1.9 * 24 * 60 * 60 * 1000),
       vehicleId: v3._id,
-      driverId: d2._id,
+      driverId: driver2._id,
+      dispatchedBy: admin._id,
+      currentStatus: 'COMPLETED',
       cargoWeight: 1200,
       plannedDistance: 450,
       actualDistance: 450,
       fuelConsumed: 95,
-      status: 'Completed',
+      lastSequence: 4,
       dispatchedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+      completedAt: new Date(Date.now() - 1.9 * 24 * 60 * 60 * 1000)
     });
 
-    // 2. Active Dispatched Trip
-    const tripActive = await Trip.create({
-      source: 'Los Angeles, CA',
-      destination: 'Las Vegas, NV',
+    await TripStatusHistory.create([
+      { tripId: trip1._id, status: 'SCHEDULED', sequence: 1, changedBy: admin._id, note: 'Scheduled' },
+      { tripId: trip1._id, status: 'DISPATCHED', sequence: 2, changedBy: admin._id, note: 'Dispatched' },
+      { tripId: trip1._id, status: 'IN_TRANSIT', sequence: 3, changedBy: driver2._id, note: 'En route' },
+      { tripId: trip1._id, status: 'COMPLETED', sequence: 4, changedBy: driver2._id, note: 'Completed' }
+    ]);
+
+    const trip2 = await Trip.create({
+      tripCode: 'TRP-000002',
+      routeName: 'Los Angeles to Las Vegas',
+      origin: { name: 'Los Angeles, CA', lat: 34.0522, lng: -118.2437 },
+      destination: { name: 'Las Vegas, NV', lat: 36.1716, lng: -115.1398 },
+      scheduledDeparture: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() + 2 * 60 * 60 * 1000),
       vehicleId: v1._id,
-      driverId: d1._id,
+      driverId: driver._id,
+      dispatchedBy: admin._id,
+      currentStatus: 'DISPATCHED',
       cargoWeight: 800,
       plannedDistance: 430,
-      status: 'Dispatched',
-      dispatchedAt: new Date()
+      lastSequence: 2,
+      dispatchedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
     });
 
-    // 3. Draft Trip
-    const tripDraft = await Trip.create({
-      source: 'Seattle, WA',
-      destination: 'Portland, OR',
+    await TripStatusHistory.create([
+      { tripId: trip2._id, status: 'SCHEDULED', sequence: 1, changedBy: admin._id, note: 'Scheduled' },
+      { tripId: trip2._id, status: 'DISPATCHED', sequence: 2, changedBy: admin._id, note: 'Dispatched' }
+    ]);
+
+    v1.status = 'DISPATCHED';
+    await v1.save();
+    driver.driverStatus = 'On Trip';
+    await driver.save();
+
+    const trip3 = await Trip.create({
+      tripCode: 'TRP-000003',
+      routeName: 'Seattle to Portland',
+      origin: { name: 'Seattle, WA', lat: 47.6062, lng: -122.3321 },
+      destination: { name: 'Portland, OR', lat: 45.5152, lng: -122.6784 },
+      scheduledDeparture: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() + 27 * 60 * 60 * 1000),
       vehicleId: v3._id,
-      driverId: d2._id,
+      driverId: driver2._id,
+      dispatchedBy: admin._id,
+      currentStatus: 'SCHEDULED',
       cargoWeight: 1500,
       plannedDistance: 280,
-      status: 'Draft'
+      lastSequence: 1
     });
 
-    console.log('Creating seed maintenance & fuel logs...');
-    // Maintenance record
-    await Maintenance.create({
+    await TripStatusHistory.create([
+      { tripId: trip3._id, status: 'SCHEDULED', sequence: 1, changedBy: admin._id, note: 'Scheduled' }
+    ]);
+
+    console.log('Creating maintenance tickets...');
+    const ticket1 = await MaintenanceTicket.create({
+      ticketCode: 'MNT-000001',
       vehicleId: v2._id,
+      category: 'BREAKDOWN',
+      priority: 'CRITICAL',
+      reportedBy: admin._id,
+      currentStatus: 'OPEN',
       description: 'Hydraulic line replacement & periodic brake check',
-      cost: 1450,
-      status: 'Open'
+      lastSequence: 1
     });
 
-    // Completed maintenance record
-    await Maintenance.create({
+    await MaintenanceLog.create({
+      ticketId: ticket1._id,
+      status: 'OPEN',
+      sequence: 1,
+      changedBy: admin._id,
+      note: 'Breakdown ticket registered.',
+      cost: 1450
+    });
+
+    v2.activeMaintenanceTicketId = ticket1._id;
+    await v2.save();
+
+    const ticket2 = await MaintenanceTicket.create({
+      ticketCode: 'MNT-000002',
       vehicleId: v1._id,
+      category: 'SCHEDULED_SERVICE',
+      priority: 'LOW',
+      reportedBy: admin._id,
+      currentStatus: 'CLOSED',
       description: 'Scheduled tyre rotation',
-      cost: 320,
-      status: 'Closed',
-      closedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+      lastSequence: 2
     });
 
-    // Fuel logs
+    await MaintenanceLog.create([
+      { ticketId: ticket2._id, status: 'OPEN', sequence: 1, changedBy: admin._id, note: 'Tyre rotation logged', cost: 0 },
+      { ticketId: ticket2._id, status: 'CLOSED', sequence: 2, changedBy: admin._id, note: 'Rotation complete. Tyres replaced.', cost: 320 }
+    ]);
+
+    console.log('Creating maintenance schedules...');
+    await MaintenanceSchedule.create([
+      { vehicleId: v1._id, scheduleType: 'TIME_BASED', dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'UPCOMING' },
+      { vehicleId: v3._id, scheduleType: 'MILEAGE_BASED', dueMileage: 6000, status: 'UPCOMING' }
+    ]);
+
+    console.log('Creating fuel logs & expenses...');
     await FuelLog.create({
       vehicleId: v3._id,
       liters: 95,
@@ -170,7 +226,6 @@ const seedData = async () => {
       date: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000)
     });
 
-    // Expenses
     await Expense.create({
       vehicleId: v3._id,
       type: 'toll',
@@ -180,7 +235,7 @@ const seedData = async () => {
 
     console.log('Database seeded successfully!');
     console.log('--------------------------------------------------');
-    console.log('Demo Credentials:');
+    console.log('Credentials:');
     console.log('Email:    manager@transitops.com');
     console.log('Password: password');
     console.log('--------------------------------------------------');

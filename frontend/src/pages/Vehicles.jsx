@@ -39,7 +39,7 @@ const Vehicles = () => {
   const [acquisitionCost, setAcquisitionCost] = useState('');
   const [formError, setFormError] = useState('');
 
-  const isManager = user?.role === 'fleet_manager';
+  const isManager = ['Admin', 'Dispatcher'].includes(user?.role);
 
   // Fetch vehicles
   const { data: vehicles, isLoading, error } = useQuery({
@@ -101,12 +101,16 @@ const Vehicles = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Available':
+      case 'AVAILABLE':
         return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><CheckCircle2 className="h-3 w-3" /> Available</span>;
       case 'On Trip':
+      case 'DISPATCHED':
         return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"><Loader2 className="h-3 w-3 animate-spin" /> On Trip</span>;
       case 'In Shop':
+      case 'UNDER_MAINTENANCE':
         return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><Wrench className="h-3 w-3" /> In Shop</span>;
       case 'Retired':
+      case 'OUT_OF_SERVICE':
         return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-destructive/10 text-destructive dark:bg-destructive/30 dark:text-destructive"><ShieldAlert className="h-3 w-3" /> Retired</span>;
       default:
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">{status}</span>;

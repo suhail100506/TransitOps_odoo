@@ -11,7 +11,7 @@ const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('fleet_manager');
+  const [role, setRole] = useState('Admin');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -95,10 +95,10 @@ const Signup = () => {
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 required
               >
-                <option value="fleet_manager">Fleet Manager</option>
-                <option value="driver">Driver</option>
-                <option value="safety_officer">Safety Officer</option>
-                <option value="financial_analyst">Financial Analyst</option>
+                <option value="Admin">Admin</option>
+                <option value="Dispatcher">Dispatcher</option>
+                <option value="MaintenanceStaff">MaintenanceStaff</option>
+                <option value="Driver">Driver</option>
               </select>
             </div>
           </CardContent>

@@ -37,7 +37,7 @@ const Drivers = () => {
   const [contactNumber, setContactNumber] = useState('');
   const [formError, setFormError] = useState('');
 
-  const isManager = user?.role === 'fleet_manager';
+  const isManager = ['Admin', 'Dispatcher'].includes(user?.role);
 
   // Fetch drivers
   const { data: drivers, isLoading, error } = useQuery({

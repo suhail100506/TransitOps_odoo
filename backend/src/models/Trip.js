@@ -1,55 +1,49 @@
 const mongoose = require('mongoose');
 
-const TripSchema = new mongoose.Schema({
-  source: {
-    type: String,
-    required: true,
-    trim: true
+const tripSchema = new mongoose.Schema({
+  tripCode: { type: String, unique: true },
+  routeName: { type: String },
+  origin: {
+    name: { type: String, required: true },
+    lat: { type: Number, default: 0 },
+    lng: { type: Number, default: 0 }
   },
   destination: {
+    name: { type: String, required: true },
+    lat: { type: Number, default: 0 },
+    lng: { type: Number, default: 0 }
+  },
+  scheduledDeparture: { type: Date, required: true },
+  scheduledArrival: { type: Date, required: true },
+  vehicleId: { type: mongoose.Schema.Types.ObjectId, ref: "Vehicle", required: true },
+  driverId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  dispatchedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  currentStatus: {
     type: String,
-    required: true,
-    trim: true
+    enum: ["SCHEDULED", "DISPATCHED", "IN_TRANSIT", "COMPLETED", "CANCELLED", "DELAYED"],
+    default: "SCHEDULED",
   },
-  vehicleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle',
-    required: true
-  },
-  driverId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Driver',
-    required: true
-  },
-  cargoWeight: {
-    type: Number, // in kg
-    required: true
-  },
-  plannedDistance: {
-    type: Number, // in km
-    required: true
-  },
-  actualDistance: {
-    type: Number, // in km
-    default: 0
-  },
-  fuelConsumed: {
-    type: Number, // in Litres
-    default: 0
-  },
-  status: {
-    type: String,
-    enum: ['Draft', 'Dispatched', 'Completed', 'Cancelled'],
-    default: 'Draft'
-  },
-  dispatchedAt: {
-    type: Date
-  },
-  completedAt: {
-    type: Date
-  }
+  lastSequence: { type: Number, default: 0 },
+  cargoWeight: { type: Number, required: true },
+  plannedDistance: { type: Number, required: true },
+  actualDistance: { type: Number },
+  fuelConsumed: { type: Number },
+  dispatchedAt: { type: Date },
+  completedAt: { type: Date }
 }, {
   timestamps: true
 });
 
-module.exports = mongoose.model('Trip', TripSchema);
+tripSchema.set('toJSON', {
+  virtuals: true,
+  transform: (doc, ret) => {
+    ret.source = ret.origin?.name || '';
+    ret.status = ret.currentStatus || 'SCHEDULED';
+    if (ret.destination && typeof ret.destination === 'object') {
+      ret.destination = ret.destination.name || '';
+    }
+    return ret;
+  }
+});
+
+module.exports = mongoose.model("Trip", tripSchema);

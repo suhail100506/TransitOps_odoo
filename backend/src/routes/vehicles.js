@@ -1,19 +1,26 @@
 const express = require('express');
 const Vehicle = require('../models/Vehicle');
 const FuelLog = require('../models/FuelLog');
-const Maintenance = require('../models/Maintenance');
-const { protect, allowRoles } = require('../middleware/auth');
+const MaintenanceTicket = require('../models/MaintenanceTicket');
+const MaintenanceLog = require('../models/MaintenanceLog');
+const { protect } = require('../middleware/auth');
+const authorize = require('../middleware/rbac');
 
 const router = express.Router();
 
-// @route   GET api/vehicles
-// @desc    Get all vehicles (with query filters)
 router.get('/', protect, async (req, res) => {
   try {
     const { status, type } = req.query;
     const query = {};
-    if (status) query.status = status;
-    if (type) query.type = type;
+    if (status) {
+      // Map Available -> AVAILABLE, etc.
+      const s = status.toUpperCase();
+      if (s === 'IN SHOP') query.status = 'UNDER_MAINTENANCE';
+      else if (s === 'ON TRIP') query.status = 'DISPATCHED';
+      else if (s === 'RETIRED') query.status = 'OUT_OF_SERVICE';
+      else query.status = s;
+    }
+    if (type) query.type = type.toUpperCase();
 
     const vehicles = await Vehicle.find(query);
     res.json(vehicles);
@@ -22,41 +29,47 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// @route   GET api/vehicles/available
-// @desc    Get available vehicles only
 router.get('/available', protect, async (req, res) => {
   try {
-    const vehicles = await Vehicle.find({ status: 'Available' });
+    const vehicles = await Vehicle.find({ status: 'AVAILABLE' });
     res.json(vehicles);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// @route   POST api/vehicles
-// @desc    Register a new vehicle
-router.post('/', protect, allowRoles(['fleet_manager']), async (req, res) => {
+router.post('/', protect, authorize('Admin', 'Dispatcher'), async (req, res) => {
   try {
-    const { regNumber, name, model, type, maxLoadCapacity, odometer, acquisitionCost } = req.body;
+    const { regNumber, registrationNumber, name, model, type, maxLoadCapacity, capacity, odometer, acquisitionCost } = req.body;
 
-    if (!regNumber || !name || !model || !type || !maxLoadCapacity || !acquisitionCost) {
+    const finalRegNumber = registrationNumber || regNumber;
+    const finalType = type;
+    const finalCapacity = capacity !== undefined ? capacity : maxLoadCapacity;
+
+    if (!finalRegNumber || !name || !model || !finalType || finalCapacity === undefined || acquisitionCost === undefined) {
       return res.status(400).json({ error: 'Please provide all required fields' });
     }
 
-    const regExists = await Vehicle.findOne({ regNumber: regNumber.toUpperCase() });
+    const regExists = await Vehicle.findOne({
+      $or: [
+        { registrationNumber: finalRegNumber.toUpperCase() },
+        { regNumber: finalRegNumber.toUpperCase() }
+      ]
+    });
+    
     if (regExists) {
       return res.status(400).json({ error: 'Vehicle with this registration number already exists' });
     }
 
     const vehicle = await Vehicle.create({
-      regNumber: regNumber.toUpperCase(),
+      registrationNumber: finalRegNumber.toUpperCase(),
       name,
       model,
-      type,
-      maxLoadCapacity,
+      type: finalType,
+      capacity: finalCapacity,
       odometer: odometer || 0,
       acquisitionCost,
-      status: 'Available'
+      status: 'AVAILABLE'
     });
 
     res.status(201).json(vehicle);
@@ -65,9 +78,7 @@ router.post('/', protect, allowRoles(['fleet_manager']), async (req, res) => {
   }
 });
 
-// @route   PUT api/vehicles/:id
-// @desc    Update vehicle details
-router.put('/:id', protect, allowRoles(['fleet_manager']), async (req, res) => {
+router.put('/:id', protect, authorize('Admin', 'Dispatcher'), async (req, res) => {
   try {
     const vehicle = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -84,16 +95,16 @@ router.put('/:id', protect, allowRoles(['fleet_manager']), async (req, res) => {
   }
 });
 
-// @route   GET api/vehicles/:id/cost-summary
-// @desc    Get cost summary (fuel, maintenance, total) for a vehicle
 router.get('/:id/cost-summary', protect, async (req, res) => {
   try {
     const vehicleId = req.params.id;
     const fuelLogs = await FuelLog.find({ vehicleId });
     const fuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
 
-    const maintenanceLogs = await Maintenance.find({ vehicleId });
-    const maintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
+    const tickets = await MaintenanceTicket.find({ vehicleId });
+    const ticketIds = tickets.map(t => t._id);
+    const maintenanceLogs = await MaintenanceLog.find({ ticketId: { $in: ticketIds } });
+    const maintenanceCost = maintenanceLogs.reduce((sum, log) => sum + (log.cost || 0), 0);
 
     res.json({
       fuelCost,
