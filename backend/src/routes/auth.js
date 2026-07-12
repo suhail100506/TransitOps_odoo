@@ -1,11 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-<<<<<<< HEAD
 const { protect, allowRoles } = require('../middleware/auth');
-=======
-const { protect } = require('../middleware/auth');
->>>>>>> trip
 const rateLimiter = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -112,7 +108,6 @@ router.get('/me', protect, async (req, res) => {
   res.json({ user: req.user });
 });
 
-<<<<<<< HEAD
 // @route   PUT api/auth/profile
 // @desc    Update own profile (name and/or password)
 router.put('/profile', protect, async (req, res) => {
