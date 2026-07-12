@@ -58,7 +58,7 @@ const VehicleTable = ({ vehicles, filters }) => {
                   {vehicle.odometer?.toLocaleString()} km
                 </TableCell>
                 <TableCell className="text-right text-slate-800 dark:text-slate-200 font-mono font-medium py-3.5 px-6">
-                  ${vehicle.acquisitionCost?.toLocaleString() || '0'}
+                  ₹{vehicle.acquisitionCost?.toLocaleString() || '0'}
                 </TableCell>
                 <TableCell className="py-3.5 px-6">
                   <VehicleStatusBadge status={vehicle.status} />

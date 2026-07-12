@@ -254,7 +254,7 @@ const Reports = () => {
         <Card className="border border-slate-200/60 dark:border-slate-800/80 border-l-4 border-l-amber-500 rounded-xl bg-white dark:bg-slate-900/50 shadow-sm hover-lift transition-all duration-300">
           <CardContent className="p-4 flex flex-col justify-between min-h-[90px]">
             <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase flex items-center gap-1.5"><Calculator className="h-3.5 w-3.5 text-amber-500" /> Operational Cost</span>
-            <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">${grandTotalCost.toLocaleString()}</span>
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">₹{grandTotalCost.toLocaleString()}</span>
           </CardContent>
         </Card>
 
@@ -288,10 +288,10 @@ const Reports = () => {
               <BarChart data={monthlyRevenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
                 <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={11} />
-                <YAxis unit=" $" stroke="var(--muted-foreground)" fontSize={11} />
+                <YAxis unit=" ₹" stroke="var(--muted-foreground)" fontSize={11} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)' }}
-                  formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']} 
+                  formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']} 
                 />
                 <Bar dataKey="Revenue" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={36} />
               </BarChart>
@@ -315,11 +315,11 @@ const Reports = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart layout="vertical" data={topCostliestData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
-                  <XAxis type="number" unit=" $" stroke="var(--muted-foreground)" fontSize={11} />
+                  <XAxis type="number" unit=" ₹" stroke="var(--muted-foreground)" fontSize={11} />
                   <YAxis dataKey="name" type="category" stroke="var(--muted-foreground)" fontSize={11} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)' }}
-                    formatter={(value) => [`$${value.toLocaleString()}`, 'Total Cost']} 
+                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Total Cost']} 
                   />
                   <Bar dataKey="Cost" layout="vertical" radius={[0, 6, 6, 0]} barSize={24}>
                     {topCostliestData.map((entry, index) => (

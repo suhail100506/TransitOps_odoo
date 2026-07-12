@@ -290,7 +290,7 @@ const Expenses = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="logFuelCost" className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400">Cost ($) *</Label>
+                    <Label htmlFor="logFuelCost" className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400">Cost (INR) *</Label>
                     <Input
                       id="logFuelCost"
                       type="number"
@@ -361,7 +361,7 @@ const Expenses = () => {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="logExpAmount" className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400">Amount ($) *</Label>
+                    <Label htmlFor="logExpAmount" className="text-xs font-semibold uppercase tracking-wider text-slate-550 dark:text-slate-400">Amount (INR) *</Label>
                     <Input
                       id="logExpAmount"
                       type="number"
@@ -410,7 +410,7 @@ const Expenses = () => {
                 <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6">Vehicle</TableHead>
                 <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6">Date</TableHead>
                 <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Liters</TableHead>
-                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Fuel Cost ($)</TableHead>
+                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Fuel Cost (INR)</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -444,7 +444,7 @@ const Expenses = () => {
                       })}
                     </TableCell>
                     <TableCell className="text-right text-slate-700 dark:text-slate-300 font-bold py-4 px-6">{log.liters} L</TableCell>
-                    <TableCell className="text-right text-slate-900 dark:text-white font-bold py-4 px-6">${log.cost?.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-slate-900 dark:text-white font-bold py-4 px-6">₹{log.cost?.toLocaleString()}</TableCell>
                   </TableRow>
                 ))
               )}
@@ -466,9 +466,9 @@ const Expenses = () => {
               <TableRow>
                 <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6">Trip</TableHead>
                 <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6">Vehicle</TableHead>
-                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Toll ($)</TableHead>
-                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Other ($)</TableHead>
-                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Maint. (Linked) ($)</TableHead>
+                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Toll (INR)</TableHead>
+                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Other (INR)</TableHead>
+                <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-right">Maint. (Linked) (INR)</TableHead>
                 <TableHead className="font-bold text-slate-550 dark:text-slate-450 py-3.5 px-6 text-center">Total / Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -492,11 +492,11 @@ const Expenses = () => {
                         {item.vehicleName && <span className="text-[10px] text-slate-400 font-semibold">{item.vehicleName}</span>}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right text-slate-800 dark:text-slate-200 font-bold py-4 px-6">${item.toll.toLocaleString()}</TableCell>
-                    <TableCell className="text-right text-slate-800 dark:text-slate-200 font-bold py-4 px-6">${item.other.toLocaleString()}</TableCell>
-                    <TableCell className="text-right text-slate-800 dark:text-slate-200 font-bold py-4 px-6">${item.maint.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-slate-800 dark:text-slate-200 font-bold py-4 px-6">₹{item.toll.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-slate-800 dark:text-slate-200 font-bold py-4 px-6">₹{item.other.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-slate-800 dark:text-slate-200 font-bold py-4 px-6">₹{item.maint.toLocaleString()}</TableCell>
                     <TableCell className="py-4 px-6 text-center flex flex-col items-center justify-center gap-1.5">
-                      <span className="font-bold text-slate-900 dark:text-white">${item.total.toLocaleString()}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">₹{item.total.toLocaleString()}</span>
                       {getTripStatusBadge(item.status)}
                     </TableCell>
                   </TableRow>
@@ -513,7 +513,7 @@ const Expenses = () => {
           <Calculator className="h-5 w-5 text-amber-500" />
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Operational Cost (Auto) = Fuel + Maint + Road Expenses</span>
         </div>
-        <span className="text-2xl font-extrabold text-amber-500">${grandTotal.toLocaleString()}</span>
+        <span className="text-2xl font-extrabold text-amber-500">₹{grandTotal.toLocaleString()}</span>
       </div>
     </div>
   );

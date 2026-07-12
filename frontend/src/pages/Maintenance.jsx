@@ -230,7 +230,7 @@ const Maintenance = () => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="logCost" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cost ($)</Label>
+              <Label htmlFor="logCost" className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium leading-none">Cost (INR)</Label>
               <Input
                 id="logCost"
                 type="number"
@@ -292,7 +292,7 @@ const Maintenance = () => {
                 <TableRow>
                   <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3.5 px-6">Vehicle</TableHead>
                   <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3.5 px-6">Service</TableHead>
-                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3.5 px-6 text-right">Cost ($)</TableHead>
+                  <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3.5 px-6 text-right">Cost (INR)</TableHead>
                   <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3.5 px-6">Status</TableHead>
                   {isManager && <TableHead className="font-bold text-slate-550 dark:text-slate-400 py-3.5 px-6 text-center">Action</TableHead>}
                 </TableRow>
@@ -321,7 +321,7 @@ const Maintenance = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-slate-700 dark:text-slate-300 font-bold py-4 px-6">{log.description}</TableCell>
-                      <TableCell className="text-right font-bold text-slate-800 dark:text-slate-200 py-4 px-6">${log.cost?.toLocaleString()}</TableCell>
+                      <TableCell className="text-right font-bold text-slate-800 dark:text-slate-200 py-4 px-6">₹{log.cost?.toLocaleString()}</TableCell>
                       <TableCell className="py-4 px-6">{getStatusBadge(log.status)}</TableCell>
                       {isManager && (
                         <TableCell className="py-4 px-6 text-center">

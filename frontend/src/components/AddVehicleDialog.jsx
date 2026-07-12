@@ -163,7 +163,7 @@ const AddVehicleDialog = ({ onAddVehicle, isPending }) => {
               />
             </div>
             <div className="space-y-1.5 col-span-1">
-              <Label htmlFor="cost" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium leading-none">Cost ($) *</Label>
+              <Label htmlFor="cost" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium leading-none">Cost (INR) *</Label>
               <Input
                 id="cost"
                 type="number"
