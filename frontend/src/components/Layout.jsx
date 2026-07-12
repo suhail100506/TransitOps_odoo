@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -23,14 +23,39 @@ const Layout = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/vehicles', label: 'Vehicles', icon: Truck },
-    { path: '/drivers', label: 'Drivers', icon: Users },
-    { path: '/trips', label: 'Trips', icon: Route },
-    { path: '/maintenance', label: 'Maintenance', icon: Wrench },
-    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel },
-    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3 }
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['driver'] },
+    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['fleet_manager'] },
+    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['safety_officer'] },
+    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver'] },
+    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager'] },
+    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst'] },
+    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] }
   ];
+
+  const roleRoutes = {
+    fleet_manager: ['/vehicles', '/maintenance'],
+    driver: ['/', '/trips'],
+    safety_officer: ['/drivers'],
+    financial_analyst: ['/expenses', '/reports']
+  };
+
+  const defaultLanding = {
+    fleet_manager: '/vehicles',
+    driver: '/',
+    safety_officer: '/drivers',
+    financial_analyst: '/expenses'
+  };
+
+  // If user is loaded, assert path permissions
+  if (user) {
+    const allowedPaths = roleRoutes[user.role] || [];
+    if (!allowedPaths.includes(location.pathname)) {
+      const landing = defaultLanding[user.role] || '/';
+      return <Navigate to={landing} replace />;
+    }
+  }
+
+  const allowedItems = navItems.filter((item) => item.role.includes(user?.role));
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950/40 font-sans text-slate-900 dark:text-slate-100">
@@ -45,7 +70,7 @@ const Layout = () => {
         
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5">
-          {navItems.map((item) => {
+          {allowedItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (

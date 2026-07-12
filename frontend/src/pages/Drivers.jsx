@@ -2,42 +2,19 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Loader2, Plus, AlertCircle, CheckCircle2, UserX, UserMinus } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import DriverFilters from '../components/DriverFilters';
+import DriverTable from '../components/DriverTable';
+import AddDriverDialog from '../components/AddDriverDialog';
 
 const Drivers = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Form states
-  const [name, setName] = useState('');
-  const [licenseNumber, setLicenseNumber] = useState('');
-  const [licenseCategory, setLicenseCategory] = useState('');
-  const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [formError, setFormError] = useState('');
-
   const isManager = user?.role === 'fleet_manager';
+
+  // Filters state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState(null);
 
   // Fetch drivers
   const { data: drivers, isLoading, error } = useQuery({
@@ -56,77 +33,35 @@ const Drivers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drivers'] });
-      setIsOpen(false);
-      resetForm();
-    },
-    onError: (err) => {
-      setFormError(err.response?.data?.error || 'Failed to create driver record.');
     }
   });
 
-  const resetForm = () => {
-    setName('');
-    setLicenseNumber('');
-    setLicenseCategory('');
-    setLicenseExpiryDate('');
-    setContactNumber('');
-    setFormError('');
+  const handleAddDriver = async (driverData) => {
+    return createDriverMutation.mutateAsync(driverData);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!name || !licenseNumber || !licenseCategory || !licenseExpiryDate || !contactNumber) {
-      setFormError('Please fill in all required fields.');
-      return;
-    }
-
-    createDriverMutation.mutate({
-      name,
-      licenseNumber,
-      licenseCategory,
-      licenseExpiryDate,
-      contactNumber
-    });
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Available':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><CheckCircle2 className="h-3 w-3" /> Available</span>;
-      case 'On Trip':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"><Loader2 className="h-3 w-3 animate-spin" /> On Trip</span>;
-      case 'Off Duty':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground"><UserMinus className="h-3 w-3" /> Off Duty</span>;
-      case 'Suspended':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-destructive/10 text-destructive dark:bg-destructive/30 dark:text-destructive"><UserX className="h-3 w-3" /> Suspended</span>;
-      default:
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">{status}</span>;
-    }
-  };
-
-  const getScoreBadge = (score) => {
-    if (score >= 90) return <span className="text-green-600 font-semibold">{score} / 100</span>;
-    if (score >= 75) return <span className="text-amber-600 font-semibold">{score} / 100</span>;
-    return <span className="text-destructive font-bold">{score} / 100</span>;
-  };
+  const toggleStatuses = [
+    { label: 'Available', style: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 border border-emerald-500/15' },
+    { label: 'On Trip', style: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/15' },
+    { label: 'Off Duty', style: 'bg-slate-200/50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border border-slate-300/30' },
+    { label: 'Suspended', style: 'bg-red-500/10 text-red-600 dark:text-red-405 border border-red-500/15' }
+  ];
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-2">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground text-sm font-medium">Loading driver records...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+        <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">Loading driver records...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center gap-3 p-4 bg-destructive/10 text-destructive rounded-lg max-w-xl mx-auto border border-destructive/20 my-8">
+      <div className="flex items-center gap-3 p-4 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-2xl max-w-xl mx-auto border border-red-500/15 my-8">
         <AlertCircle className="h-5 w-5 shrink-0" />
         <div>
-          <h3 className="font-semibold text-sm">Failed to load driver registry</h3>
+          <h3 className="font-bold text-sm">Failed to load driver registry</h3>
           <p className="text-xs opacity-90">{error.response?.data?.error || error.message}</p>
         </div>
       </div>
@@ -134,144 +69,62 @@ const Drivers = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Driver Management</h1>
-          <p className="text-muted-foreground">Monitor driver registration, licenses, and safety profiles.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Drivers & Safety Profiles</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Monitor driver registration, licenses, and safety profiles.</p>
         </div>
 
         {isManager && (
-          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Add Driver
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Register Driver</DialogTitle>
-                <DialogDescription>
-                  Create a new record for a company-registered operator.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                {formError && (
-                  <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>{formError}</span>
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <Label htmlFor="driverName">Full Name *</Label>
-                  <Input
-                    id="driverName"
-                    placeholder="e.g. Alex Johnson"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="licenseNumber">License Number *</Label>
-                    <Input
-                      id="licenseNumber"
-                      placeholder="e.g. DL-9831920"
-                      value={licenseNumber}
-                      onChange={(e) => setLicenseNumber(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="licenseCategory">Category *</Label>
-                    <Input
-                      id="licenseCategory"
-                      placeholder="e.g. Heavy Rig (Class A)"
-                      value={licenseCategory}
-                      onChange={(e) => setLicenseCategory(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="licenseExpiry">Expiry Date *</Label>
-                    <Input
-                      id="licenseExpiry"
-                      type="date"
-                      value={licenseExpiryDate}
-                      onChange={(e) => setLicenseExpiryDate(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="contactNumber">Contact Phone *</Label>
-                    <Input
-                      id="contactNumber"
-                      placeholder="+1 (555) 123-4567"
-                      value={contactNumber}
-                      onChange={(e) => setContactNumber(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <DialogFooter className="pt-4">
-                  <Button type="submit" disabled={createDriverMutation.isPending}>
-                    {createDriverMutation.isPending ? 'Registering...' : 'Add Driver'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <AddDriverDialog 
+            onAddDriver={handleAddDriver} 
+            isPending={createDriverMutation.isPending} 
+          />
         )}
       </div>
 
-      <div className="border rounded-lg bg-card shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Driver</TableHead>
-              <TableHead>License Number</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>License Expiry</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Safety Score</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {drivers?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No drivers registered yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              drivers?.map((driver) => (
-                <TableRow key={driver._id}>
-                  <TableCell className="font-semibold">{driver.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{driver.licenseNumber}</TableCell>
-                  <TableCell>{driver.licenseCategory}</TableCell>
-                  <TableCell>
-                    {new Date(driver.licenseExpiryDate).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </TableCell>
-                  <TableCell>{driver.contactNumber}</TableCell>
-                  <TableCell>{getScoreBadge(driver.safetyScore)}</TableCell>
-                  <TableCell>{getStatusBadge(driver.status)}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      {/* Search Filter bar */}
+      <div className="flex items-center justify-between">
+        <DriverFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+      </div>
+
+      {/* Driver Data Table Grid */}
+      <DriverTable 
+        drivers={drivers} 
+        searchQuery={searchQuery} 
+        selectedStatusFilter={selectedStatusFilter} 
+      />
+
+      {/* Toggle Status section from mockup */}
+      <div className="space-y-3.5">
+        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">Toggle Status Filter</span>
+        <div className="flex flex-wrap gap-3">
+          {toggleStatuses.map((t) => {
+            const isSelected = selectedStatusFilter === t.label;
+            return (
+              <button
+                key={t.label}
+                onClick={() => setSelectedStatusFilter(isSelected ? null : t.label)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-250 cursor-pointer shadow-sm border ${
+                  isSelected 
+                    ? 'ring-2 ring-offset-2 ring-cyan-500 scale-[0.98] ' + t.style
+                    : 'opacity-70 hover:opacity-100 ' + t.style
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Safety warning disclaimer note */}
+      <div className="p-4 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-slate-200/40 dark:border-slate-800/80">
+        <p className="text-xs font-semibold text-amber-600 dark:text-amber-500 flex items-center gap-1.5 leading-relaxed">
+          <AlertCircle className="h-3.5 w-3.5" />
+          <span>Rule: Any operator with an expired license category or suspended status is automatically blocked from trip allocation.</span>
+        </p>
       </div>
     </div>
   );
