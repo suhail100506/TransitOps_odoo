@@ -10,7 +10,7 @@ import { Truck, AlertCircle } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('fleet_manager');
+  const [role, setRole] = useState('Admin');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -92,10 +92,10 @@ const Login = () => {
                 className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 md:text-sm text-slate-900 dark:text-white"
                 required
               >
-                <option value="fleet_manager" className="bg-slate-900 text-white">Fleet Manager</option>
-                <option value="driver" className="bg-slate-900 text-white">Dispatcher</option>
-                <option value="safety_officer" className="bg-slate-900 text-white">Safety Officer</option>
-                <option value="financial_analyst" className="bg-slate-900 text-white">Financial Analyst</option>
+                <option value="Admin" className="bg-slate-900 text-white">Fleet Manager (Admin)</option>
+                <option value="Dispatcher" className="bg-slate-900 text-white">Dispatcher</option>
+                <option value="MaintenanceStaff" className="bg-slate-900 text-white">Maintenance Staff</option>
+                <option value="Driver" className="bg-slate-900 text-white">Driver</option>
               </select>
             </div>
           </CardContent>

@@ -2,27 +2,10 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog';
-import { Loader2, Plus, AlertCircle, Wrench, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
+import VehicleFilters from '../components/VehicleFilters';
+import VehicleTable from '../components/VehicleTable';
+import AddVehicleDialog from '../components/AddVehicleDialog';
 
 const Vehicles = () => {
   const { user } = useAuth();
@@ -40,6 +23,17 @@ const Vehicles = () => {
   const [formError, setFormError] = useState('');
 
   const isManager = ['Admin', 'Dispatcher'].includes(user?.role);
+
+  // Filters state
+  const [filters, setFilters] = useState({
+    type: 'All',
+    status: 'All',
+    regNumber: ''
+  });
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   // Fetch vehicles
   const { data: vehicles, isLoading, error } = useQuery({
@@ -59,11 +53,6 @@ const Vehicles = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
       queryClient.invalidateQueries({ queryKey: ['dashboardKpis'] });
-      setIsOpen(false);
-      resetForm();
-    },
-    onError: (err) => {
-      setFormError(err.response?.data?.error || 'Failed to create vehicle.');
     }
   });
 
@@ -116,193 +105,62 @@ const Vehicles = () => {
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">{status}</span>;
     }
   };
+    const handleAddVehicle = async (vehicleData) => {
+      return createVehicleMutation.mutateAsync(vehicleData);
+    };
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-2">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground text-sm font-medium">Loading vehicle registry...</p>
-      </div>
-    );
-  }
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">Loading vehicle registry...</p>
+        </div>
+      );
+    }
 
-  if (error) {
+    if (error) {
+      return (
+        <div className="flex items-center gap-3 p-4 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-2xl max-w-xl mx-auto border border-red-500/15 my-8">
+          <AlertCircle className="h-5 w-5 shrink-0" />
+          <div>
+            <h3 className="font-bold text-sm">Failed to load vehicle registry</h3>
+            <p className="text-xs opacity-90">{error.response?.data?.error || error.message}</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex items-center gap-3 p-4 bg-destructive/10 text-destructive rounded-lg max-w-xl mx-auto border border-destructive/20 my-8">
-        <AlertCircle className="h-5 w-5 shrink-0" />
-        <div>
-          <h3 className="font-semibold text-sm">Failed to load vehicle registry</h3>
-          <p className="text-xs opacity-90">{error.response?.data?.error || error.message}</p>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Vehicle Registry</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage and track fleet vehicles.</p>
+          </div>
+
+          {isManager && (
+            <AddVehicleDialog
+              onAddVehicle={handleAddVehicle}
+              isPending={createVehicleMutation.isPending}
+            />
+          )}
+        </div>
+
+        {/* Filters row */}
+        <VehicleFilters filters={filters} onFilterChange={handleFilterChange} />
+
+        {/* Table content */}
+        <VehicleTable vehicles={vehicles} filters={filters} />
+
+        {/* Business rules footer */}
+        <div className="p-4 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-slate-200/40 dark:border-slate-800/80">
+          <p className="text-xs font-semibold text-amber-600 dark:text-amber-500 flex items-center gap-1.5 leading-relaxed">
+            <AlertCircle className="h-3.5 w-3.5" />
+            <span>Rule: Registration Number must be unique. Retired or In Shop vehicles are automatically hidden from the dispatcher's Active Trip Assignment panel.</span>
+          </p>
         </div>
       </div>
     );
-  }
+  };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Vehicle Registry</h1>
-          <p className="text-muted-foreground">Manage and track fleet vehicles.</p>
-        </div>
-
-        {isManager && (
-          <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Register Vehicle
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Register Vehicle</DialogTitle>
-                <DialogDescription>
-                  Enter vehicle metrics to enroll it in the system.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                {formError && (
-                  <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>{formError}</span>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="regNumber">Reg Number *</Label>
-                    <Input
-                      id="regNumber"
-                      placeholder="e.g. VAN-05"
-                      value={regNumber}
-                      onChange={(e) => setRegNumber(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g. Mercedes Sprinter"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="model">Model *</Label>
-                    <Input
-                      id="model"
-                      placeholder="e.g. 2024 Cargo"
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="type">Type *</Label>
-                    <select
-                      id="type"
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                      required
-                    >
-                      <option value="Van">Van</option>
-                      <option value="Flatbed">Flatbed</option>
-                      <option value="Semi-Truck">Semi-Truck</option>
-                      <option value="Box Truck">Box Truck</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1 col-span-1">
-                    <Label htmlFor="capacity">Capacity (kg) *</Label>
-                    <Input
-                      id="capacity"
-                      type="number"
-                      placeholder="1200"
-                      value={maxLoadCapacity}
-                      onChange={(e) => setMaxLoadCapacity(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-1">
-                    <Label htmlFor="odometer">Odometer (km)</Label>
-                    <Input
-                      id="odometer"
-                      type="number"
-                      placeholder="0"
-                      value={odometer}
-                      onChange={(e) => setOdometer(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1 col-span-1">
-                    <Label htmlFor="cost">Cost ($) *</Label>
-                    <Input
-                      id="cost"
-                      type="number"
-                      placeholder="45000"
-                      value={acquisitionCost}
-                      onChange={(e) => setAcquisitionCost(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <DialogFooter className="pt-4">
-                  <Button type="submit" disabled={createVehicleMutation.isPending}>
-                    {createVehicleMutation.isPending ? 'Registering...' : 'Register Vehicle'}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-
-      <div className="border rounded-lg bg-card shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Reg Number</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Model</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Max Load</TableHead>
-              <TableHead className="text-right">Odometer</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {vehicles?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No vehicles registered yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              vehicles?.map((vehicle) => (
-                <TableRow key={vehicle._id}>
-                  <TableCell className="font-bold">{vehicle.regNumber}</TableCell>
-                  <TableCell>{vehicle.name}</TableCell>
-                  <TableCell>{vehicle.model}</TableCell>
-                  <TableCell>{vehicle.type}</TableCell>
-                  <TableCell className="text-right">{vehicle.maxLoadCapacity.toLocaleString()} kg</TableCell>
-                  <TableCell className="text-right">{vehicle.odometer.toLocaleString()} km</TableCell>
-                  <TableCell>{getStatusBadge(vehicle.status)}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  );
-};
-
-export default Vehicles;
+  export default Vehicles;

@@ -1,4 +1,4 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -23,14 +23,39 @@ const Layout = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/vehicles', label: 'Vehicles', icon: Truck },
-    { path: '/drivers', label: 'Drivers', icon: Users },
-    { path: '/trips', label: 'Trips', icon: Route },
-    { path: '/maintenance', label: 'Maintenance', icon: Wrench },
-    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel },
-    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3 }
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['Admin', 'Dispatcher', 'MaintenanceStaff', 'Driver'] },
+    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['Admin', 'Dispatcher'] },
+    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['Admin', 'Dispatcher'] },
+    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['Admin', 'Dispatcher', 'Driver'] },
+    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['Admin', 'MaintenanceStaff', 'Dispatcher'] },
+    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['Admin', 'Dispatcher'] },
+    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['Admin', 'Dispatcher', 'MaintenanceStaff'] }
   ];
+
+  const roleRoutes = {
+    Admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports'],
+    Dispatcher: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports'],
+    MaintenanceStaff: ['/', '/maintenance', '/reports'],
+    Driver: ['/', '/trips']
+  };
+
+  const defaultLanding = {
+    Admin: '/vehicles',
+    Dispatcher: '/drivers',
+    MaintenanceStaff: '/maintenance',
+    Driver: '/'
+  };
+
+  // If user is loaded, assert path permissions
+  if (user) {
+    const allowedPaths = roleRoutes[user.role] || [];
+    if (!allowedPaths.includes(location.pathname)) {
+      const landing = defaultLanding[user.role] || '/';
+      return <Navigate to={landing} replace />;
+    }
+  }
+
+  const allowedItems = navItems.filter((item) => item.role.includes(user?.role));
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950/40 font-sans text-slate-900 dark:text-slate-100">
@@ -45,7 +70,7 @@ const Layout = () => {
         
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5">
-          {navItems.map((item) => {
+          {allowedItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
@@ -74,7 +99,7 @@ const Layout = () => {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate text-slate-800 dark:text-slate-200 leading-none mb-1.5">{user?.name || 'User'}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium capitalize truncate">
-                {user?.role === 'driver' ? 'dispatcher' : user?.role?.replace('_', ' ')}
+                {user?.role === 'Admin' ? 'Fleet Manager' : user?.role === 'MaintenanceStaff' ? 'Maintenance Staff' : user?.role}
               </p>
             </div>
           </div>
