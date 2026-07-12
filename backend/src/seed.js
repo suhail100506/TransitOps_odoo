@@ -25,6 +25,13 @@ const seedData = async () => {
 
     console.log('Creating seed users...');
     await User.create({
+      name: 'System Admin',
+      email: 'admin@transitops.com',
+      passwordHash: 'admin123',
+      role: 'admin'
+    });
+
+    await User.create({
       name: 'Manager Joe',
       email: 'manager@transitops.com',
       passwordHash: 'password',

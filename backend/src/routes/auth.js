@@ -21,9 +21,14 @@ const generateToken = (id) => {
 };
 
 // @route   POST api/auth/signup
-// @desc    Register a new user
-// router.post('/signup', authLimiter, async (req, res) => {
-router.post('/signup', authLimiter, async (req, res) => {
+// @desc    Register a new user (DISABLED)
+router.post('/signup', authLimiter, (req, res) => {
+  return res.status(403).json({ error: 'Public registration is disabled. Please contact your system administrator.' });
+});
+
+// @route   POST api/auth/create-user
+// @desc    Admin provisions a new user
+router.post('/create-user', protect, allowRoles(['admin']), async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
     
@@ -43,8 +48,6 @@ router.post('/signup', authLimiter, async (req, res) => {
       role
     });
 
-    const token = generateToken(user._id);
-
     res.status(201).json({
       user: {
         id: user._id,
@@ -52,8 +55,7 @@ router.post('/signup', authLimiter, async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status
-      },
-      token
+      }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

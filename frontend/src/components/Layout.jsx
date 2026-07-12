@@ -9,7 +9,8 @@ import {
   Fuel,
   BarChart3,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Settings
 } from 'lucide-react';
 
 const Layout = () => {
@@ -23,16 +24,18 @@ const Layout = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['driver'] },
-    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['fleet_manager'] },
-    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['safety_officer'] },
-    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver'] },
-    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager'] },
-    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst'] },
-    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] }
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, role: ['driver', 'admin'] },
+    { path: '/vehicles', label: 'Fleet Registry', icon: Truck, role: ['fleet_manager', 'admin'] },
+    { path: '/drivers', label: 'Drivers & Compliance', icon: Users, role: ['safety_officer', 'admin'] },
+    { path: '/trips', label: 'Trips Dispatch', icon: Route, role: ['driver', 'admin'] },
+    { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager', 'admin'] },
+    { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst', 'admin'] },
+    { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst', 'admin'] },
+    { path: '/settings', label: 'User Settings', icon: Settings, role: ['admin'] }
   ];
 
   const roleRoutes = {
+    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/settings'],
     fleet_manager: ['/vehicles', '/maintenance'],
     driver: ['/', '/trips'],
     safety_officer: ['/drivers'],
@@ -40,6 +43,7 @@ const Layout = () => {
   };
 
   const defaultLanding = {
+    admin: '/',
     fleet_manager: '/vehicles',
     driver: '/',
     safety_officer: '/drivers',

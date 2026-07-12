@@ -31,6 +31,10 @@ export const authAPI = {
     const res = await api.post('/auth/signup', userData);
     return res.data;
   },
+  createUser: async (userData) => {
+    const res = await api.post('/auth/create-user', userData);
+    return res.data;
+  },
   getMe: async () => {
     const res = await api.get('/auth/me');
     return res.data;

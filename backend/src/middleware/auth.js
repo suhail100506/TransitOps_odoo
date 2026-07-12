@@ -39,11 +39,12 @@ const allowRoles = (roles = []) => {
       return res.status(401).json({ error: 'Not authorized' });
     }
 
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: `Access denied. Requires role: ${roles.join(', ')}` });
+    // Admins are superusers and have access to all routes
+    if (req.user.role === 'admin' || roles.includes(req.user.role)) {
+      return next();
     }
 
-    next();
+    return res.status(403).json({ error: `Access denied. Requires role: ${roles.join(', ')}` });
   };
 };
 
