@@ -276,11 +276,11 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="source" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Source *</Label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="source"
                             placeholder="City, State"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={source}
                             onChange={(e) => setSource(e.target.value)}
                             required
@@ -290,11 +290,11 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="destination" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Destination *</Label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="destination"
                             placeholder="City, State"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={destination}
                             onChange={(e) => setDestination(e.target.value)}
                             required
@@ -307,12 +307,12 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="cargoWeight" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cargo Weight (kg) *</Label>
                         <div className="relative">
-                          <Scale className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <Scale className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="cargoWeight"
                             type="number"
                             placeholder="500"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={cargoWeight}
                             onChange={(e) => setCargoWeight(e.target.value)}
                             required
@@ -322,12 +322,12 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="distance" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Planned Dist (km) *</Label>
                         <div className="relative">
-                          <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <Layers className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="distance"
                             type="number"
                             placeholder="350"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={plannedDistance}
                             onChange={(e) => setPlannedDistance(e.target.value)}
                             required
@@ -342,7 +342,7 @@ const Trips = () => {
                         id="vehicleSelect"
                         value={vehicleId}
                         onChange={(e) => setVehicleId(e.target.value)}
-                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-xs font-bold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                        className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
                         required
                       >
                         <option value="" className="bg-slate-900 text-white font-semibold">-- Choose Available Vehicle --</option>
@@ -360,7 +360,7 @@ const Trips = () => {
                         id="driverSelect"
                         value={driverId}
                         onChange={(e) => setDriverId(e.target.value)}
-                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-xs font-bold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                        className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
                         required
                       >
                         <option value="" className="bg-slate-900 text-white font-semibold">-- Choose Available Driver --</option>
@@ -484,7 +484,7 @@ const Trips = () => {
                 placeholder="Current odometer + distance"
                 value={finalOdometer}
                 onChange={(e) => setFinalOdometer(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                 required
               />
             </div>
@@ -496,7 +496,7 @@ const Trips = () => {
                 placeholder="Liters of fuel used"
                 value={fuelConsumed}
                 onChange={(e) => setFuelConsumed(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                 required
               />
             </div>
