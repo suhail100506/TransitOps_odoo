@@ -1,37 +1,68 @@
 const express = require('express');
-const User = require('../models/User');
-const { protect } = require('../middleware/auth');
-const authorize = require('../middleware/rbac');
+const Driver = require('../models/Driver');
+const { protect, allowRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', protect, async (req, res) => {
+// @route   GET api/drivers/expiring-licenses
+// @desc    Get drivers whose licenses expire within 30 days (not yet expired)
+// NOTE: must be before /:id to avoid route conflict
+router.get('/expiring-licenses', protect, async (req, res) => {
   try {
-    const { status } = req.query;
-    const query = { role: 'Driver' };
+    const today = new Date();
+    const in30Days = new Date();
+    in30Days.setDate(in30Days.getDate() + 30);
 
-    if (status) {
-      if (status === 'Available') query.driverStatus = 'Available';
-      else if (status === 'On Trip') query.driverStatus = 'On Trip';
-      else query.driverStatus = status;
-    }
+    const drivers = await Driver.find({
+      licenseExpiryDate: { $gt: today, $lte: in30Days },
+      status: { $ne: 'Suspended' }
+    }).sort({ licenseExpiryDate: 1 });
 
-    const drivers = await User.find(query).select('-passwordHash');
     res.json(drivers);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+// @route   GET api/drivers/available
+// @desc    Get available, active, non-expired license drivers
 router.get('/available', protect, async (req, res) => {
   try {
     const today = new Date();
-    const drivers = await User.find({
-      role: 'Driver',
-      driverStatus: 'Available',
+    const drivers = await Driver.find({
+      status: 'Available',
       licenseExpiryDate: { $gt: today }
-    }).select('-passwordHash');
+    });
     res.json(drivers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   GET api/drivers
+// @desc    Get all drivers (with query filters and sorting)
+router.get('/', protect, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+    if (status) query.status = status;
+
+    const drivers = await Driver.find(query).sort({ name: 1 });
+    res.json(drivers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   GET api/drivers/:id
+// @desc    Get a single driver by ID
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const driver = await Driver.findById(req.params.id);
+    if (!driver) {
+      return res.status(404).json({ error: 'Driver not found' });
+    }
+    res.json(driver);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -39,33 +70,26 @@ router.get('/available', protect, async (req, res) => {
 
 // @route   POST api/drivers
 // @desc    Create a new driver record
-router.post('/', protect, authorize('Admin', 'Dispatcher'), async (req, res) => {
+router.post('/', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
-    const { name, licenseNumber, licenseCategory, licenseExpiryDate, contactNumber, email, password } = req.body;
+    const { name, licenseNumber, licenseCategory, licenseExpiryDate, contactNumber } = req.body;
 
     if (!name || !licenseNumber || !licenseCategory || !licenseExpiryDate || !contactNumber) {
       return res.status(400).json({ error: 'Please provide all required fields' });
     }
 
-    const licenseExists = await User.findOne({ licenseNumber: licenseNumber.toUpperCase() });
+    const licenseExists = await Driver.findOne({ licenseNumber: licenseNumber.toUpperCase() });
     if (licenseExists) {
       return res.status(400).json({ error: 'Driver with this license number already exists' });
     }
 
-    const driverEmail = email || `driver_${licenseNumber.toLowerCase()}@transitops.com`;
-    const driverPassword = password || 'password';
-
-    const driver = await User.create({
+    const driver = await Driver.create({
       name,
-      email: driverEmail,
-      passwordHash: driverPassword,
-      role: 'Driver',
-      phone: contactNumber,
       licenseNumber: licenseNumber.toUpperCase(),
       licenseCategory,
       licenseExpiryDate,
       contactNumber,
-      driverStatus: 'Available',
+      status: 'Available',
       safetyScore: 100
     });
 
@@ -76,19 +100,21 @@ router.post('/', protect, authorize('Admin', 'Dispatcher'), async (req, res) => 
 });
 
 // @route   PUT api/drivers/:id
-// @desc    Update driver details (e.g. status, safety score)
-router.put('/:id', protect, authorize('Admin', 'Dispatcher'), async (req, res) => {
+// @desc    Update driver details (name, contact, license info, safety score)
+router.put('/:id', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
-    if (req.body.status !== undefined) {
-      req.body.driverStatus = req.body.status;
+    // If safety score is being updated and drops below 40, auto-suspend
+    const updateData = { ...req.body };
+    if (updateData.safetyScore !== undefined && updateData.safetyScore < 40) {
+      updateData.status = 'Suspended';
     }
 
-    const driver = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const driver = await Driver.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
-    }).select('-passwordHash');
+    });
 
-    if (!driver || driver.role !== 'Driver') {
+    if (!driver) {
       return res.status(404).json({ error: 'Driver not found' });
     }
 

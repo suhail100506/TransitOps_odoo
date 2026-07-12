@@ -20,56 +20,19 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["Admin", "Dispatcher", "MaintenanceStaff", "Driver", "admin", "fleet_manager", "safety_officer", "financial_analyst", "driver"],
+    enum: ['fleet_manager', 'driver', 'safety_officer', 'financial_analyst', 'admin', 'Admin', 'Dispatcher', 'Driver'],
     required: true
-  },
-  phone: {
-    type: String,
-    trim: true
   },
   status: {
     type: String,
+    enum: ['Active', 'Inactive'],
     default: 'Active'
-  },
-  loginAttempts: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  lockUntil: {
-    type: Number
-  },
-  
-  // Driver specific fields
-  licenseNumber: {
-    type: String,
-    trim: true,
-    uppercase: true
-  },
-  licenseCategory: {
-    type: String,
-    trim: true
-  },
-  licenseExpiryDate: {
-    type: Date
-  },
-  contactNumber: {
-    type: String,
-    trim: true
-  },
-  safetyScore: {
-    type: Number,
-    default: 100
-  },
-  driverStatus: {
-    type: String,
-    enum: ["Available", "On Trip", "Off Duty", "Suspended"],
-    default: "Available"
   }
 }, {
   timestamps: true
 });
 
+// Hash password before saving
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('passwordHash')) return next();
   try {
@@ -81,32 +44,9 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
+// Compare password method
 UserSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.passwordHash);
 };
-
-UserSchema.pre('validate', function(next) {
-  if (this.role === 'Driver' || this.role === 'driver') {
-    if (!this.driverStatus) this.driverStatus = 'Available';
-    if (this.phone && !this.contactNumber) this.contactNumber = this.phone;
-    if (this.contactNumber && !this.phone) this.phone = this.contactNumber;
-  }
-  next();
-});
-
-UserSchema.set('toJSON', {
-  virtuals: true,
-  transform: (doc, ret) => {
-    // Map database roles to legacy frontend roles for compatibility
-    if (ret.role === 'Admin') ret.role = 'fleet_manager';
-    else if (ret.role === 'Dispatcher') ret.role = 'safety_officer';
-    else if (ret.role === 'Driver') ret.role = 'driver';
-
-    if (ret.role === 'Driver' || ret.role === 'driver') {
-      ret.status = ret.driverStatus || 'Available';
-    }
-    return ret;
-  }
-});
 
 module.exports = mongoose.model('User', UserSchema);

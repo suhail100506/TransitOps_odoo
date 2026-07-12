@@ -1,22 +1,32 @@
 const express = require('express');
 const Vehicle = require('../models/Vehicle');
-const User = require('../models/User');
+const Driver = require('../models/Driver');
 const Trip = require('../models/Trip');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
+// @route   GET api/dashboard/kpis
+// @desc    Get dashboard metrics and fleet overview
 router.get('/kpis', protect, async (req, res) => {
   try {
-    const totalVehicles = await Vehicle.countDocuments({ status: { $ne: 'OUT_OF_SERVICE' } });
-    const activeVehicles = await Vehicle.countDocuments({ status: 'DISPATCHED' });
-    const availableVehicles = await Vehicle.countDocuments({ status: 'AVAILABLE' });
-    const inMaintenance = await Vehicle.countDocuments({ status: 'UNDER_MAINTENANCE' });
+    const today = new Date();
+    const in30Days = new Date();
+    in30Days.setDate(in30Days.getDate() + 30);
 
-    const activeTrips = await Trip.countDocuments({ currentStatus: { $in: ['DISPATCHED', 'IN_TRANSIT'] } });
-    const pendingTrips = await Trip.countDocuments({ currentStatus: 'SCHEDULED' });
+    // Vehicle counts
+    const totalVehicles = await Vehicle.countDocuments({ status: { $ne: 'Retired' } });
+    const activeVehicles = await Vehicle.countDocuments({ status: 'On Trip' });
+    const availableVehicles = await Vehicle.countDocuments({ status: 'Available' });
+    const inMaintenance = await Vehicle.countDocuments({ status: 'In Shop' });
 
-    const driversOnDuty = await User.countDocuments({ role: 'Driver', driverStatus: 'On Trip' });
+    // Trip counts
+    const activeTrips = await Trip.countDocuments({ status: 'Dispatched' });
+    const pendingTrips = await Trip.countDocuments({ status: 'Draft' });
+    const completedTrips = await Trip.countDocuments({ status: 'Completed' });
+
+    // Driver counts
+    const driversOnDuty = await Driver.countDocuments({ status: 'On Trip' });
 
     const fleetUtilization = totalVehicles > 0 
       ? Math.round((activeVehicles / totalVehicles) * 100) 

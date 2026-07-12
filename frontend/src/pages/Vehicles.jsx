@@ -44,55 +44,6 @@ const Vehicles = () => {
     }
   });
 
-  const resetForm = () => {
-    setRegNumber('');
-    setName('');
-    setModel('');
-    setType('Semi-Truck');
-    setMaxLoadCapacity('');
-    setOdometer('');
-    setAcquisitionCost('');
-    setFormError('');
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!regNumber || !name || !model || !type || !maxLoadCapacity || !acquisitionCost) {
-      setFormError('Please fill in all required fields.');
-      return;
-    }
-
-    createVehicleMutation.mutate({
-      regNumber,
-      name,
-      model,
-      type,
-      maxLoadCapacity: Number(maxLoadCapacity),
-      odometer: Number(odometer) || 0,
-      acquisitionCost: Number(acquisitionCost)
-    });
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Available':
-      case 'AVAILABLE':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><CheckCircle2 className="h-3 w-3" /> Available</span>;
-      case 'On Trip':
-      case 'DISPATCHED':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"><Loader2 className="h-3 w-3 animate-spin" /> On Trip</span>;
-      case 'In Shop':
-      case 'UNDER_MAINTENANCE':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><Wrench className="h-3 w-3" /> In Shop</span>;
-      case 'Retired':
-      case 'OUT_OF_SERVICE':
-        return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-destructive/10 text-destructive dark:bg-destructive/30 dark:text-destructive"><ShieldAlert className="h-3 w-3" /> Retired</span>;
-      default:
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-muted text-muted-foreground">{status}</span>;
-    }
-  };
   const handleAddVehicle = async (vehicleData) => {
     return createVehicleMutation.mutateAsync(vehicleData);
   };
@@ -127,9 +78,9 @@ const Vehicles = () => {
         </div>
 
         {isManager && (
-          <AddVehicleDialog
-            onAddVehicle={handleAddVehicle}
-            isPending={createVehicleMutation.isPending}
+          <AddVehicleDialog 
+            onAddVehicle={handleAddVehicle} 
+            isPending={createVehicleMutation.isPending} 
           />
         )}
       </div>

@@ -168,7 +168,7 @@ const getROIReportData = async () => {
 };
 
 // @route   GET api/reports/roi
-// @desc    Calculate ROI details per vehicle
+// @desc    Get ROI statistics per vehicle
 router.get('/roi', protect, allowRoles(['financial_analyst', 'fleet_manager']), async (req, res) => {
   try {
     const report = await getROIReportData();

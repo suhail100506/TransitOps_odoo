@@ -46,6 +46,7 @@ const Layout = () => {
   };
 
   const defaultLanding = {
+    admin: '/',
     fleet_manager: '/vehicles',
     driver: '/',
     safety_officer: '/drivers',
@@ -150,7 +151,7 @@ const Layout = () => {
 
         {/* Dynamic Screen Area */}
         <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+          <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
             <Outlet />
           </div>
         </main>

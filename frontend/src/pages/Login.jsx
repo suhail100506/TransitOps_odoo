@@ -36,7 +36,7 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-xl border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white/80 dark:bg-slate-950/70 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-slate-200 dark:hover:border-slate-800">
         <CardHeader className="space-y-2 text-center pt-8 pb-4">
           <div className="flex justify-center mb-3">
-            <div className="p-3 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-2xl text-cyan-600 dark:text-cyan-400 shadow-sm border border-cyan-500/20">
+            <div className="p-3 bg-cyan-500/10 dark:bg-cyan-500/25 rounded-2xl text-cyan-600 dark:text-cyan-400 shadow-sm border border-cyan-500/20">
               <Truck className="h-6 w-6" />
             </div>
           </div>

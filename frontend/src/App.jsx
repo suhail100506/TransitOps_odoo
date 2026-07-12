@@ -37,6 +37,7 @@ function App() {
     <Routes>
       {/* Public Auth Routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Navigate to="/login" replace />} />
 
       {/* Protected App Routes */}
       <Route

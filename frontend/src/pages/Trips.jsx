@@ -278,11 +278,11 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="source" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Source *</Label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="source"
                             placeholder="City, State"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={source}
                             onChange={(e) => setSource(e.target.value)}
                             required
@@ -292,11 +292,11 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="destination" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Destination *</Label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="destination"
                             placeholder="City, State"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={destination}
                             onChange={(e) => setDestination(e.target.value)}
                             required
@@ -309,12 +309,12 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="cargoWeight" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cargo Weight (kg) *</Label>
                         <div className="relative">
-                          <Scale className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <Scale className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="cargoWeight"
                             type="number"
                             placeholder="500"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={cargoWeight}
                             onChange={(e) => setCargoWeight(e.target.value)}
                             required
@@ -324,12 +324,12 @@ const Trips = () => {
                       <div className="space-y-1.5">
                         <Label htmlFor="distance" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Planned Dist (km) *</Label>
                         <div className="relative">
-                          <Layers className="absolute left-3 top-3.5 h-4 w-4 text-slate-405 dark:text-slate-500" />
+                          <Layers className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
                           <Input
                             id="distance"
                             type="number"
                             placeholder="350"
-                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10.5"
+                            className="pl-10 rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                             value={plannedDistance}
                             onChange={(e) => setPlannedDistance(e.target.value)}
                             required
@@ -344,7 +344,7 @@ const Trips = () => {
                         id="vehicleSelect"
                         value={vehicleId}
                         onChange={(e) => setVehicleId(e.target.value)}
-                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-xs font-bold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                        className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
                         required
                       >
                         <option value="" className="bg-slate-900 text-white font-semibold">-- Choose Available Vehicle --</option>
@@ -362,7 +362,7 @@ const Trips = () => {
                         id="driverSelect"
                         value={driverId}
                         onChange={(e) => setDriverId(e.target.value)}
-                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-xs font-bold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
+                        className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 text-slate-900 dark:text-white"
                         required
                       >
                         <option value="" className="bg-slate-900 text-white font-semibold">-- Choose Available Driver --</option>
@@ -486,7 +486,7 @@ const Trips = () => {
                 placeholder="Current odometer + distance"
                 value={finalOdometer}
                 onChange={(e) => setFinalOdometer(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                 required
               />
             </div>
@@ -498,7 +498,7 @@ const Trips = () => {
                 placeholder="Liters of fuel used"
                 value={fuelConsumed}
                 onChange={(e) => setFuelConsumed(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10"
                 required
               />
             </div>
@@ -509,115 +509,115 @@ const Trips = () => {
             </DialogFooter>
           </form>
         </DialogContent>
-      </Dialog>
-
-      <div className="border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-        <Table>
-          <TableHeader className="bg-slate-50/50 dark:bg-slate-900/60 border-b border-slate-200/60 dark:border-slate-800/80">
-            <TableRow>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6">Route (Source &rarr; Dest)</TableHead>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6">Vehicle</TableHead>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6">Driver</TableHead>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6 text-right">Weight</TableHead>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6 text-right">Distance</TableHead>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6">Status</TableHead>
-              <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-6 text-center">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {trips?.length === 0 ? (
+      </Dialog>      <div className="border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white dark:bg-slate-900/50 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+        <div className="w-full overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-slate-50/50 dark:bg-slate-900/60 border-b border-slate-200/60 dark:border-slate-800/80">
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500 font-medium">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Layers className="h-8 w-8 stroke-[1.5] text-slate-300 dark:text-slate-700" />
-                    <span>No trips scheduled yet.</span>
-                  </div>
-                </TableCell>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4">Route (Source &rarr; Dest)</TableHead>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4">Vehicle</TableHead>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4">Driver</TableHead>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4 text-right">Weight</TableHead>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4 text-right">Distance</TableHead>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4">Status</TableHead>
+                <TableHead className="font-semibold text-slate-600 dark:text-slate-300 py-3.5 px-4 text-center">Actions</TableHead>
               </TableRow>
-            ) : (
-              trips?.map((trip) => (
-                <TableRow 
-                  key={trip._id} 
-                  onClick={() => setSelectedTripDetails(trip)}
-                  className="cursor-pointer hover:bg-slate-50/40 dark:hover:bg-slate-900/40 border-b border-slate-100 dark:border-slate-900/80 last:border-0 transition-colors"
-                >
-                  <TableCell className="font-bold text-slate-900 dark:text-white py-3.5 px-6">
-                    <span className="flex items-center gap-2">
-                      <span>{trip.source}</span>
-                      <span className="text-slate-400 font-normal">&rarr;</span>
-                      <span>{trip.destination}</span>
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3.5 px-6">
-                    {trip.vehicleId ? (
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-900 dark:text-white">{trip.vehicleId.regNumber}</span>
-                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{trip.vehicleId.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-slate-400 text-xs italic">Deleted</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-slate-705 dark:text-slate-300 font-medium py-3.5 px-6">
-                    {trip.driverId ? trip.driverId.name : <span className="text-slate-400 text-xs italic">Deleted</span>}
-                  </TableCell>
-                  <TableCell className="text-right text-slate-700 dark:text-slate-300 font-medium py-3.5 px-6">{trip.cargoWeight.toLocaleString()} kg</TableCell>
-                  <TableCell className="text-right text-slate-700 dark:text-slate-300 font-medium py-3.5 px-6">
-                    {trip.status === 'Completed' ? `${trip.actualDistance} km (actual)` : `${trip.plannedDistance} km (planned)`}
-                  </TableCell>
-                  <TableCell className="py-3.5 px-6">{getStatusBadge(trip.status)}</TableCell>
-                  <TableCell className="py-3.5 px-6" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-center gap-2">
-                      {trip.status === 'Draft' && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="default"
-                            onClick={(e) => { e.stopPropagation(); dispatchTripMutation.mutate(trip._id); }}
-                            className="bg-cyan-600 hover:bg-cyan-700 text-white flex items-center gap-1 h-8 rounded-xl px-3 font-semibold text-xs shadow-sm"
-                          >
-                            <Play className="h-3 w-3" /> Dispatch
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => { e.stopPropagation(); cancelTripMutation.mutate(trip._id); }}
-                            className="text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/30 hover:bg-red-500/5 h-8 rounded-xl px-3 font-semibold text-xs"
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      )}
-                      {trip.status === 'Dispatched' && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="default"
-                            onClick={(e) => { e.stopPropagation(); setCompleteTripId(trip._id); }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 h-8 rounded-xl px-3 font-semibold text-xs shadow-sm"
-                          >
-                            <CheckCircle className="h-3 w-3" /> Complete
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => { e.stopPropagation(); cancelTripMutation.mutate(trip._id); }}
-                            className="text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/30 hover:bg-red-500/5 h-8 rounded-xl px-3 font-semibold text-xs"
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      )}
-                      {['Completed', 'Cancelled'].includes(trip.status) && (
-                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic">Closed</span>
-                      )}
+            </TableHeader>
+            <TableBody>
+              {trips?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-slate-400 dark:text-slate-500 font-medium">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Layers className="h-8 w-8 stroke-[1.5] text-slate-300 dark:text-slate-700" />
+                      <span>No trips scheduled yet.</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                trips?.map((trip) => (
+                  <TableRow 
+                    key={trip._id} 
+                    onClick={() => setSelectedTripDetails(trip)}
+                    className="cursor-pointer hover:bg-slate-50/40 dark:hover:bg-slate-900/40 border-b border-slate-100 dark:border-slate-900/80 last:border-0 transition-colors"
+                  >
+                    <TableCell className="font-bold text-slate-900 dark:text-white py-3.5 px-4">
+                      <span className="flex items-center gap-2">
+                        <span>{trip.source}</span>
+                        <span className="text-slate-400 font-normal">&rarr;</span>
+                        <span>{trip.destination}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-3.5 px-4">
+                      {trip.vehicleId ? (
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-900 dark:text-white">{trip.vehicleId.regNumber}</span>
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">{trip.vehicleId.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">Deleted</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-slate-705 dark:text-slate-300 font-medium py-3.5 px-4">
+                      {trip.driverId ? trip.driverId.name : <span className="text-slate-400 text-xs italic">Deleted</span>}
+                    </TableCell>
+                    <TableCell className="text-right text-slate-700 dark:text-slate-300 font-medium py-3.5 px-4">{trip.cargoWeight.toLocaleString()} kg</TableCell>
+                    <TableCell className="text-right text-slate-700 dark:text-slate-300 font-medium py-3.5 px-4">
+                      {trip.status === 'Completed' ? `${trip.actualDistance} km (actual)` : `${trip.plannedDistance} km (planned)`}
+                    </TableCell>
+                    <TableCell className="py-3.5 px-4">{getStatusBadge(trip.status)}</TableCell>
+                    <TableCell className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-2">
+                        {trip.status === 'Draft' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={(e) => { e.stopPropagation(); dispatchTripMutation.mutate(trip._id); }}
+                              className="bg-cyan-600 hover:bg-cyan-700 text-white flex items-center gap-1 h-8 rounded-xl px-3 font-semibold text-xs shadow-sm"
+                            >
+                              <Play className="h-3 w-3" /> Dispatch
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); cancelTripMutation.mutate(trip._id); }}
+                              className="text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/30 hover:bg-red-500/5 h-8 rounded-xl px-3 font-semibold text-xs"
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                        {trip.status === 'Dispatched' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={(e) => { e.stopPropagation(); setCompleteTripId(trip._id); }}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 h-8 rounded-xl px-3 font-semibold text-xs shadow-sm"
+                            >
+                              <CheckCircle className="h-3 w-3" /> Complete
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); cancelTripMutation.mutate(trip._id); }}
+                              className="text-red-600 dark:text-red-400 border-red-500/20 dark:border-red-500/30 hover:bg-red-500/5 h-8 rounded-xl px-3 font-semibold text-xs"
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                        {['Completed', 'Cancelled'].includes(trip.status) && (
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium italic">Closed</span>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Trip Details & Lifecycle Modal */}

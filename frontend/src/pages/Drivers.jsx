@@ -77,9 +77,9 @@ const Drivers = () => {
         </div>
 
         {isManager && (
-          <AddDriverDialog
-            onAddDriver={handleAddDriver}
-            isPending={createDriverMutation.isPending}
+          <AddDriverDialog 
+            onAddDriver={handleAddDriver} 
+            isPending={createDriverMutation.isPending} 
           />
         )}
       </div>
@@ -111,10 +111,10 @@ const Drivers = () => {
       </div>
 
       {/* Driver Data Table Grid */}
-      <DriverTable
-        drivers={drivers}
-        searchQuery={searchQuery}
-        selectedStatusFilter={selectedStatusFilter}
+      <DriverTable 
+        drivers={drivers} 
+        searchQuery={searchQuery} 
+        selectedStatusFilter={selectedStatusFilter} 
       />
 
       {/* Safety warning disclaimer note */}
