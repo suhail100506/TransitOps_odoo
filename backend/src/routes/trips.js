@@ -1,0 +1,210 @@
+const express = require('express');
+const Trip = require('../models/Trip');
+const Vehicle = require('../models/Vehicle');
+const Driver = require('../models/Driver');
+const { protect } = require('../middleware/auth');
+
+const router = express.Router();
+
+// @route   GET api/trips
+// @desc    Get all trips with query filters
+router.get('/', protect, async (req, res) => {
+  try {
+    const { status } = req.query;
+    const query = {};
+    if (status) query.status = status;
+
+    const trips = await Trip.find(query)
+      .populate('vehicleId')
+      .populate('driverId')
+      .sort({ createdAt: -1 });
+    res.json(trips);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   POST api/trips
+// @desc    Create a new trip (Draft)
+router.post('/', protect, async (req, res) => {
+  try {
+    const { source, destination, vehicleId, driverId, cargoWeight, plannedDistance } = req.body;
+
+    if (!source || !destination || !vehicleId || !driverId || !cargoWeight || !plannedDistance) {
+      return res.status(400).json({ error: 'Please provide all required fields' });
+    }
+
+    // Business rule: cargoWeight <= vehicle.maxLoadCapacity
+    const vehicle = await Vehicle.findById(vehicleId);
+    if (!vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+
+    if (cargoWeight > vehicle.maxLoadCapacity) {
+      return res.status(400).json({
+        error: `Cargo weight (${cargoWeight} kg) exceeds vehicle maximum capacity (${vehicle.maxLoadCapacity} kg)`
+      });
+    }
+
+    const trip = await Trip.create({
+      source,
+      destination,
+      vehicleId,
+      driverId,
+      cargoWeight,
+      plannedDistance,
+      status: 'Draft'
+    });
+
+    res.status(201).json(trip);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   POST api/trips/:id/dispatch
+// @desc    Dispatch a trip (Start journey)
+router.post('/:id/dispatch', protect, async (req, res) => {
+  try {
+    const trip = await Trip.findById(req.params.id);
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found' });
+    }
+
+    if (trip.status !== 'Draft') {
+      return res.status(400).json({ error: `Cannot dispatch a trip in status: ${trip.status}` });
+    }
+
+    const vehicle = await Vehicle.findById(trip.vehicleId);
+    const driver = await Driver.findById(trip.driverId);
+
+    if (!vehicle || !driver) {
+      return res.status(404).json({ error: 'Vehicle or Driver not found for this trip' });
+    }
+
+    // Business Rule: vehicle and driver must be Available
+    if (vehicle.status !== 'Available') {
+      return res.status(400).json({ error: `Vehicle is currently unavailable (Status: ${vehicle.status})` });
+    }
+    if (driver.status !== 'Available') {
+      return res.status(400).json({ error: `Driver is currently unavailable (Status: ${driver.status})` });
+    }
+
+    // Business Rule: license must not be expired
+    const today = new Date();
+    if (new Date(driver.licenseExpiryDate) <= today) {
+      return res.status(400).json({ error: `Driver license is expired. Expiry: ${driver.licenseExpiryDate.toDateString()}` });
+    }
+
+    // Cascade update statuses
+    vehicle.status = 'On Trip';
+    driver.status = 'On Trip';
+    await vehicle.save();
+    await driver.save();
+
+    trip.status = 'Dispatched';
+    trip.dispatchedAt = new Date();
+    await trip.save();
+
+    res.json(trip);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   POST api/trips/:id/complete
+// @desc    Complete a trip (requires fuel and odometer logs)
+router.post('/:id/complete', protect, async (req, res) => {
+  try {
+    const { finalOdometer, fuelConsumed } = req.body;
+
+    if (finalOdometer === undefined || fuelConsumed === undefined) {
+      return res.status(400).json({ error: 'Please provide final odometer and fuel consumed' });
+    }
+
+    const trip = await Trip.findById(req.params.id);
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found' });
+    }
+
+    if (trip.status !== 'Dispatched') {
+      return res.status(400).json({ error: `Cannot complete a trip in status: ${trip.status}` });
+    }
+
+    const vehicle = await Vehicle.findById(trip.vehicleId);
+    const driver = await Driver.findById(trip.driverId);
+
+    if (!vehicle || !driver) {
+      return res.status(404).json({ error: 'Vehicle or Driver not found' });
+    }
+
+    // Validate odometer makes sense
+    if (finalOdometer < vehicle.odometer) {
+      return res.status(400).json({
+        error: `Final odometer (${finalOdometer} km) cannot be less than vehicle's current odometer (${vehicle.odometer} km)`
+      });
+    }
+
+    // Calculate actual distance
+    const actualDistance = finalOdometer - vehicle.odometer;
+
+    // Update vehicle odometer and status
+    vehicle.odometer = finalOdometer;
+    vehicle.status = 'Available';
+    await vehicle.save();
+
+    // Update driver status
+    driver.status = 'Available';
+    await driver.save();
+
+    // Update trip details
+    trip.status = 'Completed';
+    trip.actualDistance = actualDistance;
+    trip.fuelConsumed = fuelConsumed;
+    trip.completedAt = new Date();
+    await trip.save();
+
+    res.json(trip);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   POST api/trips/:id/cancel
+// @desc    Cancel a trip (releases vehicle/driver if dispatched)
+router.post('/:id/cancel', protect, async (req, res) => {
+  try {
+    const trip = await Trip.findById(req.params.id);
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found' });
+    }
+
+    if (['Completed', 'Cancelled'].includes(trip.status)) {
+      return res.status(400).json({ error: `Cannot cancel a trip that is already ${trip.status}` });
+    }
+
+    // Release vehicle and driver if they were dispatched
+    if (trip.status === 'Dispatched') {
+      const vehicle = await Vehicle.findById(trip.vehicleId);
+      const driver = await Driver.findById(trip.driverId);
+
+      if (vehicle && vehicle.status === 'On Trip') {
+        vehicle.status = 'Available';
+        await vehicle.save();
+      }
+      if (driver && driver.status === 'On Trip') {
+        driver.status = 'Available';
+        await driver.save();
+      }
+    }
+
+    trip.status = 'Cancelled';
+    await trip.save();
+
+    res.json(trip);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
