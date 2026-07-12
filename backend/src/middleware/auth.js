@@ -70,16 +70,7 @@ const allowRoles = (roles = []) => {
       return mappedUserRole === mappedR;
     });
 
-<<<<<<< HEAD
-    // Map the allowed legacy roles to database roles
-    const allowedDbRoles = roles.map(r => roleMapping[r] || r.charAt(0).toUpperCase() + r.slice(1));
-
-    const userMappedRole = roleMapping[req.user.role] || req.user.role;
-
-    if (allowedDbRoles.includes(userMappedRole) || userMappedRole === 'Admin') {
-=======
     if (allowed || allowedMapped) {
->>>>>>> 0f10f848b7351d3b79020799b8d04759cd86f4a8
       return next();
     }
 
