@@ -24,4 +24,34 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const allowRoles = (roles = []) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'NOT_AUTHORIZED', message: 'Not authorized' });
+    }
+
+    // Role mapping: legacy frontend role -> database role
+    const roleMapping = {
+      fleet_manager: 'Admin',
+      safety_officer: 'Dispatcher',
+      financial_analyst: 'Dispatcher',
+      driver: 'Driver',
+      admin: 'Admin'
+    };
+
+    // Map the allowed legacy roles to database roles
+    const allowedDbRoles = roles.map(r => roleMapping[r] || r.charAt(0).toUpperCase() + r.slice(1));
+
+    if (allowedDbRoles.includes(req.user.role) || req.user.role === 'Admin') {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: 'FORBIDDEN',
+      message: `Access denied. Required roles: ${roles.join(', ')}`
+    });
+  };
+};
+
+module.exports = { protect, allowRoles };

@@ -46,9 +46,8 @@ tripSchema.set('toJSON', {
   }
 });
 
-module.exports = mongoose.model("Trip", tripSchema);
-TripSchema.index({ vehicleId: 1 });
-TripSchema.index({ driverId: 1 });
-TripSchema.index({ status: 1 });
+tripSchema.index({ vehicleId: 1 });
+tripSchema.index({ driverId: 1 });
+tripSchema.index({ currentStatus: 1 });
 
-module.exports = mongoose.model('Trip', TripSchema);
+module.exports = mongoose.model("Trip", tripSchema);

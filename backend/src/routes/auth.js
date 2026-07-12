@@ -20,106 +20,100 @@ const generateToken = (id) => {
   });
 };
 
-router.post('/signup', async (req, res) => {
+// @route   POST api/auth/signup
+// @desc    Register a new user
+router.post('/signup', authLimiter, async (req, res) => {
   try {
-    let { name, email, password, role } = req.body;
+    const { name, email, password, role } = req.body;
 
-    // @route   POST api/auth/signup
-    // @desc    Register a new user
-    // router.post('/signup', authLimiter, async (req, res) => {
-    router.post('/signup', authLimiter, async (req, res) => {
-      try {
-        const { name, email, password, role } = req.body;
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ error: 'Please provide all fields' });
+    }
 
-        if (!name || !email || !password || !role) {
-          return res.status(400).json({ error: 'Please provide all fields' });
-        }
+    // Map legacy roles to new roles
+    let mappedRole = role;
+    if (role === 'fleet_manager') mappedRole = 'Admin';
+    else if (role === 'safety_officer') mappedRole = 'Dispatcher';
+    else if (role === 'financial_analyst') mappedRole = 'Dispatcher';
+    else if (role === 'driver') mappedRole = 'Driver';
 
-        // Map legacy roles to new roles
-        let mappedRole = role;
-        if (role === 'fleet_manager') mappedRole = 'Admin';
-        else if (role === 'safety_officer') mappedRole = 'Dispatcher';
-        else if (role === 'financial_analyst') mappedRole = 'Dispatcher';
-        else if (role === 'driver') mappedRole = 'Driver';
+    // Capitalize first letter to match new roles just in case
+    if (mappedRole) {
+      mappedRole = mappedRole.charAt(0).toUpperCase() + mappedRole.slice(1);
+    }
 
-        // Capitalize first letter to match new roles just in case
-        if (mappedRole) {
-          mappedRole = mappedRole.charAt(0).toUpperCase() + mappedRole.slice(1);
-        }
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ error: 'User already exists with this email' });
+    }
 
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-          return res.status(400).json({ error: 'User already exists with this email' });
-        }
-
-        const user = await User.create({
-          name,
-          email,
-          passwordHash: password,
-          role: mappedRole
-        });
-
-        const token = generateToken(user._id);
-
-        res.status(201).json({
-          user: {
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            status: user.status
-          },
-          token
-        });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
+    const user = await User.create({
+      name,
+      email,
+      passwordHash: password,
+      role: mappedRole
     });
 
-    router.post('/login', async (req, res) => {
-      // @route   POST api/auth/login
-      // @desc    Authenticate user and get token
-      router.post('/login', authLimiter, async (req, res) => {
-        try {
-          const { email, password } = req.body;
+    const token = generateToken(user._id);
 
-          if (!email || !password) {
-            return res.status(400).json({ error: 'Please provide email and password' });
-          }
+    res.status(201).json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status
+      },
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
-          const user = await User.findOne({ email });
-          if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-          }
+// @route   POST api/auth/login
+// @desc    Authenticate user and get token
+router.post('/login', authLimiter, async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-          const isMatch = await user.comparePassword(password);
-          if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-          }
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Please provide email and password' });
+    }
 
-          if (user.status === 'Inactive') {
-            return res.status(403).json({ error: 'User account is inactive' });
-          }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-          const token = generateToken(user._id);
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
 
-          res.json({
-            user: {
-              id: user._id,
-              name: user.name,
-              email: user.email,
-              role: user.role,
-              status: user.status
-            },
-            token
-          });
-        } catch (error) {
-          res.status(500).json({ error: error.message });
-        }
-      });
+    if (user.status === 'Inactive') {
+      return res.status(403).json({ error: 'User account is inactive' });
+    }
 
-      router.get('/me', protect, async (req, res) => {
-        res.json({ user: req.user });
-      });
+    const token = generateToken(user._id);
 
-      module.exports = router;
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status
+      },
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/me', protect, async (req, res) => {
+  res.json({ user: req.user });
+});
+
+module.exports = router;
