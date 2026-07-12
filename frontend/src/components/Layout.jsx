@@ -1,4 +1,5 @@
-import { Outlet, Link, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -9,7 +10,9 @@ import {
   Fuel,
   BarChart3,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Loader2,
+  Settings as SettingsIcon
 } from 'lucide-react';
 
 const Layout = () => {
@@ -30,15 +33,16 @@ const Layout = () => {
     { path: '/maintenance', label: 'Maintenance', icon: Wrench, role: ['fleet_manager'] },
     { path: '/expenses', label: 'Fuel & Expenses', icon: Fuel, role: ['financial_analyst'] },
     { path: '/reports', label: 'Reports & Analytics', icon: BarChart3, role: ['financial_analyst'] },
-    { path: '/users', label: 'User Management', icon: UserIcon, role: ['admin'] }
+    { path: '/users', label: 'User Management', icon: UserIcon, role: ['admin'] },
+    { path: '/settings', label: 'Settings', icon: SettingsIcon, role: ['driver', 'fleet_manager', 'safety_officer', 'financial_analyst', 'admin'] }
   ];
 
   const roleRoutes = {
-    fleet_manager: ['/vehicles', '/maintenance'],
-    driver: ['/', '/trips'],
-    safety_officer: ['/drivers'],
-    financial_analyst: ['/expenses', '/reports'],
-    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/users']
+    fleet_manager: ['/vehicles', '/maintenance', '/settings'],
+    driver: ['/', '/trips', '/settings'],
+    safety_officer: ['/drivers', '/settings'],
+    financial_analyst: ['/expenses', '/reports', '/settings'],
+    admin: ['/', '/vehicles', '/drivers', '/trips', '/maintenance', '/expenses', '/reports', '/users', '/settings']
   };
 
   const defaultLanding = {
@@ -49,15 +53,23 @@ const Layout = () => {
     admin: '/users'
   };
 
-  // If user is loaded, assert path permissions
-  if (user) {
-    if (user.role !== 'admin') {
-      const allowedPaths = roleRoutes[user.role] || [];
-      if (!allowedPaths.includes(location.pathname)) {
-        const landing = defaultLanding[user.role] || '/';
-        return <Navigate to={landing} replace />;
-      }
+  const allowedPaths = user ? (roleRoutes[user.role] || []) : [];
+  const isAuthorized = !user || user.role === 'admin' || allowedPaths.includes(location.pathname);
+
+  // Assert path permissions
+  useEffect(() => {
+    if (user && !isAuthorized) {
+      const landing = defaultLanding[user.role] || '/';
+      navigate(landing, { replace: true });
     }
+  }, [user, isAuthorized, navigate]);
+
+  if (user && !isAuthorized) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-2 bg-slate-50 dark:bg-slate-950">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </div>
+    );
   }
 
   const allowedItems = navItems.filter((item) => item.role.includes(user?.role) || user?.role === 'admin');

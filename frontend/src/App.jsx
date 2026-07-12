@@ -10,6 +10,7 @@ import Maintenance from './pages/Maintenance';
 import Expenses from './pages/Expenses';
 import Reports from './pages/Reports';
 import UsersManagement from './pages/UsersManagement';
+import Settings from './pages/Settings';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children }) => {
@@ -54,6 +55,7 @@ function App() {
         <Route path="expenses" element={<Expenses />} />
         <Route path="reports" element={<Reports />} />
         <Route path="users" element={<UsersManagement />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
 
       {/* Fallback Redirect */}
