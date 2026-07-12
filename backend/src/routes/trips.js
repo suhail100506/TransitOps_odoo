@@ -34,15 +34,48 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ error: 'Please provide all required fields' });
     }
 
-    // Business rule: cargoWeight <= vehicle.maxLoadCapacity
+    // Fetch vehicle and driver
     const vehicle = await Vehicle.findById(vehicleId);
     if (!vehicle) {
       return res.status(404).json({ error: 'Vehicle not found' });
     }
 
+    const driver = await Driver.findById(driverId);
+    if (!driver) {
+      return res.status(404).json({ error: 'Driver not found' });
+    }
+
+    // Business rule: cargoWeight <= vehicle.maxLoadCapacity
     if (cargoWeight > vehicle.maxLoadCapacity) {
       return res.status(400).json({
         error: `Cargo weight (${cargoWeight} kg) exceeds vehicle maximum capacity (${vehicle.maxLoadCapacity} kg)`
+      });
+    }
+
+    // Business rule: vehicle status is not In Shop/Retired/On Trip
+    if (['In Shop', 'Retired', 'On Trip'].includes(vehicle.status)) {
+      return res.status(400).json({
+        error: `Vehicle is not available for a new trip (Status: ${vehicle.status})`
+      });
+    }
+
+    // Business rule: driver status is Available AND licenseExpiryDate > today AND status != Suspended
+    if (driver.status !== 'Available') {
+      return res.status(400).json({
+        error: `Driver is not available (Status: ${driver.status})`
+      });
+    }
+
+    if (driver.status === 'Suspended') {
+      return res.status(400).json({
+        error: 'Driver is Suspended'
+      });
+    }
+
+    const today = new Date();
+    if (new Date(driver.licenseExpiryDate) <= today) {
+      return res.status(400).json({
+        error: 'Driver license has expired'
       });
     }
 

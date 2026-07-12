@@ -52,6 +52,7 @@ Please record all manual or AI-assisted updates to the codebase below.
 | 2026-07-12 11:05 | **Antigravity (AI)** | Frontend Code | Configured React Router routes, Protected Route guards, and layout sidebar navigation | `frontend/src/App.jsx`, `frontend/src/components/Layout.jsx` |
 | 2026-07-12 11:10 | **Antigravity (AI)** | Frontend Code | Programmed complete page shells and interactive modals for all application screens | `frontend/src/pages/*` |
 | 2026-07-12 11:20 | **Antigravity (AI)** | Git Config | Updated root .gitignore to ignore node_modules, dist and .env for both frontend and backend, while tracking .env.example and lockfiles | `.gitignore` |
+| 2026-07-12 11:25 | **Antigravity (AI)** | Backend Validation | Added validation checks on vehicle and driver availability and driver license expiry in POST /trips route handler | `backend/src/routes/trips.js` |
 
 ---
 
