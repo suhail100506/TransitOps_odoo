@@ -1,23 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../services/api';
+import { dashboardAPI } from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Percent, 
-  Truck, 
-  Users, 
+import {
+  Percent,
+  Truck,
+  Users,
   Navigation,
+  CheckCircle2,
+  Fuel,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  Wrench
 } from 'lucide-react';
 
 const Dashboard = () => {
   const { data: kpis, isLoading, error } = useQuery({
     queryKey: ['dashboardKpis'],
-    queryFn: async () => {
-      const res = await api.get('/dashboard/kpis');
-      return res.data;
-    },
-    refetchOnWindowFocus: true // Refetches on focus as per roadmap guardrail
+    queryFn: dashboardAPI.getKpis,
+    refetchOnWindowFocus: true
   });
 
   if (isLoading) {
@@ -47,30 +48,52 @@ const Dashboard = () => {
       value: `${kpis?.fleetUtilization ?? 0}%`,
       description: 'Active vehicles vs total fleet size',
       icon: Percent,
-      color: 'text-blue-500'
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10'
     },
     {
       title: 'Active Vehicles',
       value: `${kpis?.activeVehicles ?? 0}`,
-      description: `${kpis?.availableVehicles ?? 0} available, ${kpis?.inMaintenance ?? 0} in shop`,
+      description: `${kpis?.availableVehicles ?? 0} available · ${kpis?.inMaintenance ?? 0} in shop`,
       icon: Truck,
-      color: 'text-green-500'
+      color: 'text-green-500',
+      bg: 'bg-green-500/10'
     },
     {
       title: 'Drivers on Duty',
       value: `${kpis?.driversOnDuty ?? 0}`,
       description: 'Drivers currently on active trips',
       icon: Users,
-      color: 'text-amber-500'
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10'
     },
     {
-      title: 'Trip Statistics',
+      title: 'Active Trips',
       value: `${kpis?.activeTrips ?? 0}`,
-      description: `${kpis?.pendingTrips ?? 0} trips pending dispatch`,
+      description: `${kpis?.pendingTrips ?? 0} pending dispatch`,
       icon: Navigation,
-      color: 'text-purple-500'
+      color: 'text-purple-500',
+      bg: 'bg-purple-500/10'
+    },
+    {
+      title: 'Completed Trips',
+      value: `${kpis?.completedTrips ?? 0}`,
+      description: 'Total trips completed to date',
+      icon: CheckCircle2,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10'
+    },
+    {
+      title: 'Avg Fuel Efficiency',
+      value: kpis?.avgFuelEfficiency ? `${kpis.avgFuelEfficiency} km/L` : 'N/A',
+      description: 'Across all completed trip records',
+      icon: Fuel,
+      color: 'text-cyan-500',
+      bg: 'bg-cyan-500/10'
     }
   ];
+
+  const expiringCount = kpis?.expiringLicenses ?? 0;
 
   return (
     <div className="space-y-6">
@@ -79,17 +102,36 @@ const Dashboard = () => {
         <p className="text-muted-foreground">Real-time telemetry and operation overview.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* License Expiry Alert Banner */}
+      {expiringCount > 0 && (
+        <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg">
+          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              License Expiry Warning
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              {expiringCount} driver license{expiringCount > 1 ? 's' : ''} will expire within the next 30 days.
+              Review the <a href="/drivers" className="underline font-medium">Drivers</a> page immediately.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* KPI Cards Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <Card key={idx} className="shadow-sm border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                <Icon className={`h-4.5 w-4.5 ${card.color}`} />
+                <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
+                <div className={`p-2 rounded-md ${card.bg}`}>
+                  <Icon className={`h-4 w-4 ${card.color}`} />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{card.value}</div>
+                <div className="text-2xl font-bold tracking-tight">{card.value}</div>
                 <p className="text-xs text-muted-foreground mt-1">{card.description}</p>
               </CardContent>
             </Card>
@@ -97,15 +139,39 @@ const Dashboard = () => {
         })}
       </div>
 
-      {/* Hero Welcome Info */}
-      <Card className="p-6 border bg-gradient-to-br from-primary/5 to-accent-bg">
-        <div className="max-w-2xl">
-          <h2 className="text-xl font-semibold mb-2">Welcome to TransitOps Management</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Monitor and coordinate fleet logistics. Register assets under the Vehicles and Drivers sections, 
-            create and dispatch cargo Trips, manage Maintenance schedules, and keep track of Fuel & incidentals.
-          </p>
-        </div>
+      {/* Fleet Status Live Summary */}
+      <Card className="border">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Truck className="h-4 w-4 text-primary" />
+            Fleet Status Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 divide-x text-center">
+            <div className="px-4 py-2">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                <span className="text-xs font-medium text-muted-foreground">Available</span>
+              </div>
+              <p className="text-2xl font-bold text-green-600">{kpis?.availableVehicles ?? 0}</p>
+            </div>
+            <div className="px-4 py-2">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                <span className="text-xs font-medium text-muted-foreground">On Trip</span>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">{kpis?.activeVehicles ?? 0}</p>
+            </div>
+            <div className="px-4 py-2">
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Wrench className="h-3 w-3 text-amber-500" />
+                <span className="text-xs font-medium text-muted-foreground">In Shop</span>
+              </div>
+              <p className="text-2xl font-bold text-amber-600">{kpis?.inMaintenance ?? 0}</p>
+            </div>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );
