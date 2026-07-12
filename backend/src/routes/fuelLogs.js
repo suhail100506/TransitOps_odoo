@@ -105,7 +105,7 @@ router.delete('/:id', protect, async (req, res) => {
 });
 
 // @route   GET api/fuel-logs/cost/:vehicleId
-// @desc    Auto-compute total operational cost (Fuel + Maintenance) for a vehicle
+// @desc    Auto-compute total operational cost (Fuel + Maintenance) for a specific vehicle
 router.get('/cost/:vehicleId', protect, async (req, res) => {
   try {
     const { vehicleId } = req.params;
@@ -115,7 +115,7 @@ router.get('/cost/:vehicleId', protect, async (req, res) => {
     const totalFuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
     const totalLiters = fuelLogs.reduce((sum, log) => sum + log.liters, 0);
     
-    // 2. Calculate Total Maintenance Cost (Dynamically requiring Maintenance to avoid circular deps if any)
+    // 2. Calculate Total Maintenance Cost
     const Maintenance = require('../models/Maintenance');
     const maintenanceLogs = await Maintenance.find({ vehicleId });
     const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
@@ -130,6 +130,31 @@ router.get('/cost/:vehicleId', protect, async (req, res) => {
         totalFuelCost, 
         totalMaintenanceCost,
         totalLiters 
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   GET api/fuel-logs/total-cost
+// @desc    Auto-compute GLOBAL total operational cost (Fuel + Maintenance) across all vehicles
+router.get('/total-cost', protect, async (req, res) => {
+  try {
+    const fuelLogs = await FuelLog.find({});
+    const totalFuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
+
+    const Maintenance = require('../models/Maintenance');
+    const maintenanceLogs = await Maintenance.find({});
+    const totalMaintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
+
+    const totalOperationalCost = totalFuelCost + totalMaintenanceCost;
+
+    res.json({
+      totalOperationalCost,
+      breakdown: {
+        totalFuelCost,
+        totalMaintenanceCost
       }
     });
   } catch (error) {
