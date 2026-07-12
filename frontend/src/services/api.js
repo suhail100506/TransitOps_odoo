@@ -35,6 +35,18 @@ export const authAPI = {
     const res = await api.post('/auth/create-user', userData);
     return res.data;
   },
+  getUsers: async () => {
+    const res = await api.get('/auth/users');
+    return res.data;
+  },
+  updateUser: async (id, userData) => {
+    const res = await api.put(`/auth/users/${id}`, userData);
+    return res.data;
+  },
+  deleteUser: async (id) => {
+    const res = await api.delete(`/auth/users/${id}`);
+    return res.data;
+  },
   getMe: async () => {
     const res = await api.get('/auth/me');
     return res.data;

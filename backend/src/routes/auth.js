@@ -182,4 +182,85 @@ router.patch('/users/:id/status', protect, allowRoles(['fleet_manager']), async 
   }
 });
 
+// @route   GET api/auth/users
+// @desc    Admin lists all users
+router.get('/users', protect, allowRoles(['admin']), async (req, res) => {
+  try {
+    const users = await User.find({}).select('-passwordHash').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   PUT api/auth/users/:id
+// @desc    Admin updates a user (name, email, role, status)
+router.put('/users/:id', protect, allowRoles(['admin']), async (req, res) => {
+  try {
+    const { name, email, role, status } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent admin from deactivating or demoting themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      if (status === 'Inactive') {
+        return res.status(400).json({ error: 'Cannot deactivate your own administrator account.' });
+      }
+      if (role && role !== 'admin') {
+        return res.status(400).json({ error: 'Cannot change your own role from administrator.' });
+      }
+    }
+
+    if (name) user.name = name;
+    if (email) {
+      const emailExists = await User.findOne({ email, _id: { $ne: req.params.id } });
+      if (emailExists) {
+        return res.status(400).json({ error: 'Email already in use by another account' });
+      }
+      user.email = email;
+    }
+    if (role) user.role = role;
+    if (status) user.status = status;
+
+    await user.save();
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   DELETE api/auth/users/:id
+// @desc    Admin deletes a user
+router.delete('/users/:id', protect, allowRoles(['admin']), async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ error: 'Cannot delete your own administrator account.' });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: 'User account deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
