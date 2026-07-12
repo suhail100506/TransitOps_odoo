@@ -41,14 +41,14 @@ const seedData = async () => {
     });
 
     const managerUser = await User.create({
-      name: 'Manager Joe',
+      name: 'Manager Rajesh',
       email: 'manager@transitops.com',
       passwordHash: 'password',
       role: 'fleet_manager'
     });
 
     const driverUser = await User.create({
-      name: 'Driver Alex',
+      name: 'Driver Amit',
       email: 'alex@transitops.com',
       passwordHash: 'password',
       role: 'driver'
@@ -90,62 +90,62 @@ const seedData = async () => {
 
     console.log('Creating seed drivers...');
     const d1 = await Driver.create({
-      name: 'Alex Johnson',
+      name: 'Amit Sharma',
       licenseNumber: 'DL-A10983',
       licenseCategory: 'Heavy Rig (Class A)',
       licenseExpiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      contactNumber: '+1 (555) 123-9876',
+      contactNumber: '+91 98765 43210',
       safetyScore: 95,
       status: 'On Trip'
     });
 
     const d2 = await Driver.create({
-      name: 'Sarah Connor',
+      name: 'Priya Patel',
       licenseNumber: 'DL-B84310',
       licenseCategory: 'Commercial (Class B)',
       licenseExpiryDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
-      contactNumber: '+1 (555) 234-5678',
+      contactNumber: '+91 98765 12345',
       safetyScore: 88,
       status: 'Available'
     });
 
     // Driver with expired license — triggers red highlight in Drivers page
     await Driver.create({
-      name: 'Marcus Wright',
+      name: 'Vikram Singh',
       licenseNumber: 'DL-C11239',
       licenseCategory: 'Light Commercial',
       licenseExpiryDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      contactNumber: '+1 (555) 345-6789',
+      contactNumber: '+91 99887 76655',
       safetyScore: 65,
       status: 'Available'
     });
 
     // Driver with license expiring in 20 days — triggers dashboard alert banner
     await Driver.create({
-      name: 'Diana Prince',
+      name: 'Kiran Bedi',
       licenseNumber: 'DL-D20019',
       licenseCategory: 'Commercial (Class B)',
       licenseExpiryDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000),
-      contactNumber: '+1 (555) 456-7890',
+      contactNumber: '+91 99001 12233',
       safetyScore: 91,
       status: 'Available'
     });
 
     console.log('Creating seed trips...');
-    // 1. Completed Trip — BOX-03 / Sarah Connor
+    // 1. Completed Trip — BOX-03 / Priya Patel
     const trip1 = await Trip.create({
-      source: 'Chicago, IL',
-      destination: 'Detroit, MI',
+      source: 'Mumbai, MH',
+      destination: 'Pune, MH',
       vehicleId: v3._id,
       driverId: d2._id,
       cargoWeight: 1200,
-      plannedDistance: 450,
-      actualDistance: 450,
-      fuelConsumed: 95,
+      plannedDistance: 150,
+      actualDistance: 150,
+      fuelConsumed: 32,
       status: 'Completed',
       tripCode: 'TRP-000001',
-      routeName: 'Chicago to Detroit',
-      origin: { name: 'Chicago, IL', lat: 41.8781, lng: -87.6298 },
+      routeName: 'Mumbai to Pune',
+      origin: { name: 'Mumbai, MH', lat: 19.0760, lng: 72.8777 },
       scheduledDeparture: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       scheduledArrival: new Date(Date.now() - 1.9 * 24 * 60 * 60 * 1000),
       dispatchedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -160,20 +160,20 @@ const seedData = async () => {
       { tripId: trip1._id, status: 'COMPLETED', sequence: 4, changedBy: driverUser._id, note: 'Completed' }
     ]);
 
-    // 2. Completed Trip — VAN-05 / Alex Johnson
+    // 2. Completed Trip — VAN-05 / Amit Sharma
     const trip2 = await Trip.create({
-      source: 'Phoenix, AZ',
-      destination: 'Tucson, AZ',
+      source: 'Delhi, DL',
+      destination: 'Jaipur, RJ',
       vehicleId: v1._id,
       driverId: d1._id,
       cargoWeight: 900,
-      plannedDistance: 185,
-      actualDistance: 185,
-      fuelConsumed: 42,
+      plannedDistance: 270,
+      actualDistance: 270,
+      fuelConsumed: 55,
       status: 'Completed',
       tripCode: 'TRP-000002',
-      routeName: 'Phoenix to Tucson',
-      origin: { name: 'Phoenix, AZ', lat: 33.4484, lng: -112.0740 },
+      routeName: 'Delhi to Jaipur',
+      origin: { name: 'Delhi, DL', lat: 28.7041, lng: 77.1025 },
       scheduledDeparture: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       scheduledArrival: new Date(Date.now() - 4.9 * 24 * 60 * 60 * 1000),
       dispatchedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
@@ -185,18 +185,18 @@ const seedData = async () => {
       { tripId: trip2._id, status: 'COMPLETED', sequence: 2, changedBy: driverUser._id, note: 'Completed' }
     ]);
 
-    // 3. Active Dispatched Trip — VAN-05 / Alex Johnson
+    // 3. Active Dispatched Trip — VAN-05 / Amit Sharma
     const trip3 = await Trip.create({
-      source: 'Los Angeles, CA',
-      destination: 'Las Vegas, NV',
+      source: 'Ahmedabad, GJ',
+      destination: 'Mumbai, MH',
       vehicleId: v1._id,
       driverId: d1._id,
       cargoWeight: 800,
-      plannedDistance: 430,
+      plannedDistance: 530,
       status: 'Dispatched',
       tripCode: 'TRP-000003',
-      routeName: 'Los Angeles to Las Vegas',
-      origin: { name: 'Los Angeles, CA', lat: 34.0522, lng: -118.2437 },
+      routeName: 'Ahmedabad to Mumbai',
+      origin: { name: 'Ahmedabad, GJ', lat: 23.0225, lng: 72.5714 },
       scheduledDeparture: new Date(Date.now() - 2 * 60 * 60 * 1000),
       scheduledArrival: new Date(Date.now() + 2 * 60 * 60 * 1000),
       dispatchedAt: new Date()
@@ -207,18 +207,18 @@ const seedData = async () => {
       { tripId: trip3._id, status: 'DISPATCHED', sequence: 2, changedBy: managerUser._id, note: 'Dispatched' }
     ]);
 
-    // 4. Draft Trip — BOX-03 / Sarah Connor
+    // 4. Draft Trip — BOX-03 / Priya Patel
     const trip4 = await Trip.create({
-      source: 'Seattle, WA',
-      destination: 'Portland, OR',
+      source: 'Gandhinagar, GJ',
+      destination: 'Surat, GJ',
       vehicleId: v3._id,
       driverId: d2._id,
       cargoWeight: 1500,
       plannedDistance: 280,
       status: 'Draft',
       tripCode: 'TRP-000004',
-      routeName: 'Seattle to Portland',
-      origin: { name: 'Seattle, WA', lat: 47.6062, lng: -122.3321 },
+      routeName: 'Gandhinagar to Surat',
+      origin: { name: 'Gandhinagar, GJ', lat: 23.2156, lng: 72.6369 },
       scheduledDeparture: new Date(Date.now() + 24 * 60 * 60 * 1000),
       scheduledArrival: new Date(Date.now() + 27 * 60 * 60 * 1000)
     });
@@ -231,9 +231,12 @@ const seedData = async () => {
     const ticket1 = await MaintenanceTicket.create({
       ticketCode: 'MNT-000001',
       vehicleId: v2._id,
+      category: 'BREAKDOWN',
+      priority: 'CRITICAL',
+      reportedBy: adminUser._id,
+      currentStatus: 'OPEN',
       description: 'Hydraulic line replacement & periodic brake check',
-      cost: 1450,
-      status: 'Open'
+      lastSequence: 1
     });
 
     // Also populate legacy Maintenance model for safety
@@ -256,10 +259,12 @@ const seedData = async () => {
     const ticket2 = await MaintenanceTicket.create({
       ticketCode: 'MNT-000002',
       vehicleId: v1._id,
+      category: 'SCHEDULED_SERVICE',
+      priority: 'LOW',
+      reportedBy: adminUser._id,
+      currentStatus: 'CLOSED',
       description: 'Scheduled tyre rotation',
-      cost: 320,
-      status: 'Closed',
-      closedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
+      lastSequence: 2
     });
 
     await Maintenance.create({
@@ -294,13 +299,13 @@ const seedData = async () => {
     console.log('Creating seed expenses...');
     // VAN-05
     await Expense.create({ vehicleId: v1._id, type: 'toll', amount: 28.50, date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) });
-    await Expense.create({ vehicleId: v1._id, type: 'parking', amount: 15.00, date: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000) });
+    await Expense.create({ vehicleId: v1._id, type: 'other', amount: 15.00, date: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000) });
     // TRK-10
     await Expense.create({ vehicleId: v2._id, type: 'toll', amount: 65.00, date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) });
-    await Expense.create({ vehicleId: v2._id, type: 'incidental', amount: 40.00, date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) });
+    await Expense.create({ vehicleId: v2._id, type: 'other', amount: 40.00, date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) });
     // BOX-03
     await Expense.create({ vehicleId: v3._id, type: 'toll', amount: 45.00, date: new Date(Date.now() - 1.5 * 24 * 60 * 60 * 1000) });
-    await Expense.create({ vehicleId: v3._id, type: 'parking', amount: 20.00, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000) });
+    await Expense.create({ vehicleId: v3._id, type: 'other', amount: 20.00, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000) });
 
     console.log('Database seeded successfully!');
     console.log('--------------------------------------------------');
