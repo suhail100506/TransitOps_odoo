@@ -8,7 +8,7 @@ const ExpenseSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['toll', 'fuel', 'parking', 'incidental', 'other'],
+    enum: ['toll', 'other'],
     required: true
   },
   amount: {

@@ -8,12 +8,17 @@ const Maintenance = require('./models/Maintenance');
 const FuelLog = require('./models/FuelLog');
 const Expense = require('./models/Expense');
 
+// Trip branch models
+const TripStatusHistory = require('./models/TripStatusHistory');
+const MaintenanceTicket = require('./models/MaintenanceTicket');
+const MaintenanceLog = require('./models/MaintenanceLog');
+const MaintenanceSchedule = require('./models/MaintenanceSchedule');
+
 const seedData = async () => {
   try {
     console.log('Connecting to database for seeding...');
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/transitops');
 
-    // Clear existing data
     console.log('Clearing existing collections...');
     await User.deleteMany({});
     await Vehicle.deleteMany({});
@@ -22,23 +27,27 @@ const seedData = async () => {
     await Maintenance.deleteMany({});
     await FuelLog.deleteMany({});
     await Expense.deleteMany({});
+    await TripStatusHistory.deleteMany({});
+    await MaintenanceTicket.deleteMany({});
+    await MaintenanceLog.deleteMany({});
+    await MaintenanceSchedule.deleteMany({});
 
-    console.log('Creating seed users...');
-    await User.create({
+    console.log('Creating users (Admin, Managers, Drivers)...');
+    const adminUser = await User.create({
       name: 'System Admin',
       email: 'admin@transitops.com',
       passwordHash: 'admin123',
       role: 'admin'
     });
 
-    await User.create({
+    const managerUser = await User.create({
       name: 'Manager Joe',
       email: 'manager@transitops.com',
       passwordHash: 'password',
       role: 'fleet_manager'
     });
 
-    await User.create({
+    const driverUser = await User.create({
       name: 'Driver Alex',
       email: 'alex@transitops.com',
       passwordHash: 'password',
@@ -124,7 +133,7 @@ const seedData = async () => {
 
     console.log('Creating seed trips...');
     // 1. Completed Trip — BOX-03 / Sarah Connor
-    await Trip.create({
+    const trip1 = await Trip.create({
       source: 'Chicago, IL',
       destination: 'Detroit, MI',
       vehicleId: v3._id,
@@ -134,12 +143,25 @@ const seedData = async () => {
       actualDistance: 450,
       fuelConsumed: 95,
       status: 'Completed',
+      tripCode: 'TRP-000001',
+      routeName: 'Chicago to Detroit',
+      origin: { name: 'Chicago, IL', lat: 41.8781, lng: -87.6298 },
+      scheduledDeparture: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() - 1.9 * 24 * 60 * 60 * 1000),
       dispatchedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
     });
 
-    // 2. Completed Trip — VAN-05 / Alex Johnson (populates avg fuel efficiency)
-    await Trip.create({
+    // Create TripStatusHistory for Trip 1
+    await TripStatusHistory.create([
+      { tripId: trip1._id, status: 'SCHEDULED', sequence: 1, changedBy: managerUser._id, note: 'Scheduled' },
+      { tripId: trip1._id, status: 'DISPATCHED', sequence: 2, changedBy: managerUser._id, note: 'Dispatched' },
+      { tripId: trip1._id, status: 'IN_TRANSIT', sequence: 3, changedBy: driverUser._id, note: 'En route' },
+      { tripId: trip1._id, status: 'COMPLETED', sequence: 4, changedBy: driverUser._id, note: 'Completed' }
+    ]);
+
+    // 2. Completed Trip — VAN-05 / Alex Johnson
+    const trip2 = await Trip.create({
       source: 'Phoenix, AZ',
       destination: 'Tucson, AZ',
       vehicleId: v1._id,
@@ -149,12 +171,22 @@ const seedData = async () => {
       actualDistance: 185,
       fuelConsumed: 42,
       status: 'Completed',
+      tripCode: 'TRP-000002',
+      routeName: 'Phoenix to Tucson',
+      origin: { name: 'Phoenix, AZ', lat: 33.4484, lng: -112.0740 },
+      scheduledDeparture: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() - 4.9 * 24 * 60 * 60 * 1000),
       dispatchedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       completedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000)
     });
 
+    await TripStatusHistory.create([
+      { tripId: trip2._id, status: 'SCHEDULED', sequence: 1, changedBy: managerUser._id, note: 'Scheduled' },
+      { tripId: trip2._id, status: 'COMPLETED', sequence: 2, changedBy: driverUser._id, note: 'Completed' }
+    ]);
+
     // 3. Active Dispatched Trip — VAN-05 / Alex Johnson
-    await Trip.create({
+    const trip3 = await Trip.create({
       source: 'Los Angeles, CA',
       destination: 'Las Vegas, NV',
       vehicleId: v1._id,
@@ -162,26 +194,72 @@ const seedData = async () => {
       cargoWeight: 800,
       plannedDistance: 430,
       status: 'Dispatched',
+      tripCode: 'TRP-000003',
+      routeName: 'Los Angeles to Las Vegas',
+      origin: { name: 'Los Angeles, CA', lat: 34.0522, lng: -118.2437 },
+      scheduledDeparture: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() + 2 * 60 * 60 * 1000),
       dispatchedAt: new Date()
     });
 
+    await TripStatusHistory.create([
+      { tripId: trip3._id, status: 'SCHEDULED', sequence: 1, changedBy: managerUser._id, note: 'Scheduled' },
+      { tripId: trip3._id, status: 'DISPATCHED', sequence: 2, changedBy: managerUser._id, note: 'Dispatched' }
+    ]);
+
     // 4. Draft Trip — BOX-03 / Sarah Connor
-    await Trip.create({
+    const trip4 = await Trip.create({
       source: 'Seattle, WA',
       destination: 'Portland, OR',
       vehicleId: v3._id,
       driverId: d2._id,
       cargoWeight: 1500,
       plannedDistance: 280,
-      status: 'Draft'
+      status: 'Draft',
+      tripCode: 'TRP-000004',
+      routeName: 'Seattle to Portland',
+      origin: { name: 'Seattle, WA', lat: 47.6062, lng: -122.3321 },
+      scheduledDeparture: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      scheduledArrival: new Date(Date.now() + 27 * 60 * 60 * 1000)
     });
 
-    console.log('Creating seed maintenance records...');
+    await TripStatusHistory.create([
+      { tripId: trip4._id, status: 'SCHEDULED', sequence: 1, changedBy: managerUser._id, note: 'Scheduled' }
+    ]);
+
+    console.log('Creating seed maintenance tickets...');
+    const ticket1 = await MaintenanceTicket.create({
+      ticketCode: 'MNT-000001',
+      vehicleId: v2._id,
+      description: 'Hydraulic line replacement & periodic brake check',
+      cost: 1450,
+      status: 'Open'
+    });
+
+    // Also populate legacy Maintenance model for safety
     await Maintenance.create({
       vehicleId: v2._id,
       description: 'Hydraulic line replacement & periodic brake check',
       cost: 1450,
       status: 'Open'
+    });
+
+    await MaintenanceLog.create({
+      ticketId: ticket1._id,
+      status: 'OPEN',
+      sequence: 1,
+      changedBy: managerUser._id,
+      note: 'Breakdown ticket registered.',
+      cost: 1450
+    });
+
+    const ticket2 = await MaintenanceTicket.create({
+      ticketCode: 'MNT-000002',
+      vehicleId: v1._id,
+      description: 'Scheduled tyre rotation',
+      cost: 320,
+      status: 'Closed',
+      closedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
     });
 
     await Maintenance.create({
@@ -192,13 +270,15 @@ const seedData = async () => {
       closedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000)
     });
 
-    await Maintenance.create({
-      vehicleId: v3._id,
-      description: 'Oil change & air filter replacement',
-      cost: 180,
-      status: 'Closed',
-      closedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-    });
+    await MaintenanceLog.create([
+      { ticketId: ticket2._id, status: 'OPEN', sequence: 1, changedBy: managerUser._id, note: 'Tyre rotation logged', cost: 0 },
+      { ticketId: ticket2._id, status: 'CLOSED', sequence: 2, changedBy: managerUser._id, note: 'Rotation complete. Tyres replaced.', cost: 320 }
+    ]);
+
+    await MaintenanceSchedule.create([
+      { vehicleId: v1._id, scheduleType: 'TIME_BASED', dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'UPCOMING' },
+      { vehicleId: v3._id, scheduleType: 'MILEAGE_BASED', dueMileage: 6000, status: 'UPCOMING' }
+    ]);
 
     console.log('Creating seed fuel logs...');
     // VAN-05
@@ -228,11 +308,7 @@ const seedData = async () => {
     console.log('Admin Email:   admin@transitops.com');
     console.log('Manager Email: manager@transitops.com');
     console.log('Driver Email:  alex@transitops.com');
-    console.log('Password:      password');
-    console.log('--------------------------------------------------');
-    console.log('Notes:');
-    console.log('  Marcus Wright - expired license (red highlight demo)');
-    console.log('  Diana Prince  - license expires in 20 days (alert banner demo)');
+    console.log('Password:      password / admin123 (for admin)');
     console.log('--------------------------------------------------');
 
     mongoose.connection.close();

@@ -85,7 +85,7 @@ const Layout = () => {
           </div>
           <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">TransitOps</span>
         </div>
-        
+
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5">
           {allowedItems.map((item) => {
@@ -95,11 +95,10 @@ const Layout = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  isActive
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
                     ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-semibold shadow-sm border-l-2 border-cyan-500 rounded-l-none pl-3'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900/60 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <Icon className={`h-4.5 w-4.5 ${isActive ? 'text-cyan-500' : 'text-slate-500 dark:text-slate-400'}`} />
                 {item.label}

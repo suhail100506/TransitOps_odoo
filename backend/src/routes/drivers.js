@@ -99,6 +99,7 @@ router.post('/', protect, allowRoles(['fleet_manager', 'safety_officer']), async
   }
 });
 
+// @route   PUT api/drivers/:id
 // @desc    Update driver details (name, contact, license info, safety score)
 router.put('/:id', protect, allowRoles(['fleet_manager', 'safety_officer']), async (req, res) => {
   try {
@@ -116,39 +117,6 @@ router.put('/:id', protect, allowRoles(['fleet_manager', 'safety_officer']), asy
     if (!driver) {
       return res.status(404).json({ error: 'Driver not found' });
     }
-
-    res.json(driver);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// @route   PATCH api/drivers/:id/status
-// @desc    Manager-only status change (Available, Off Duty, Suspended)
-router.patch('/:id/status', protect, allowRoles(['fleet_manager']), async (req, res) => {
-  try {
-    const { status } = req.body;
-    const allowedStatuses = ['Available', 'Off Duty', 'Suspended'];
-
-    if (!status || !allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        error: `Invalid status. Allowed values: ${allowedStatuses.join(', ')}`
-      });
-    }
-
-    const driver = await Driver.findById(req.params.id);
-    if (!driver) {
-      return res.status(404).json({ error: 'Driver not found' });
-    }
-
-    if (driver.status === 'On Trip') {
-      return res.status(400).json({
-        error: 'Cannot change status of a driver who is currently On Trip. Complete or cancel their trip first.'
-      });
-    }
-
-    driver.status = status;
-    await driver.save();
 
     res.json(driver);
   } catch (error) {

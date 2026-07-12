@@ -157,9 +157,9 @@ router.get('/:id/cost-summary', protect, async (req, res) => {
     const maintenanceCost = maintenanceLogs.reduce((sum, log) => sum + log.cost, 0);
 
     res.json({
-      fuelCost: parseFloat(fuelCost.toFixed(2)),
-      maintenanceCost: parseFloat(maintenanceCost.toFixed(2)),
-      totalCost: parseFloat((fuelCost + maintenanceCost).toFixed(2))
+      fuelCost,
+      maintenanceCost,
+      totalCost: fuelCost + maintenanceCost
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

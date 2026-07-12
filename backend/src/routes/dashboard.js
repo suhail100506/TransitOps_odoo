@@ -28,32 +28,9 @@ router.get('/kpis', protect, async (req, res) => {
     // Driver counts
     const driversOnDuty = await Driver.countDocuments({ status: 'On Trip' });
 
-    // Expiring licenses (within 30 days, not yet expired)
-    const expiringLicenses = await Driver.countDocuments({
-      licenseExpiryDate: { $gt: today, $lte: in30Days },
-      status: { $ne: 'Suspended' }
-    });
-
-    // Fleet utilization percentage
-    const fleetUtilization = totalVehicles > 0
-      ? Math.round((activeVehicles / totalVehicles) * 100)
+    const fleetUtilization = totalVehicles > 0 
+      ? Math.round((activeVehicles / totalVehicles) * 100) 
       : 0;
-
-    // Average fuel efficiency across all completed trips (km/L)
-    const completedTripDocs = await Trip.find({
-      status: 'Completed',
-      fuelConsumed: { $gt: 0 },
-      actualDistance: { $gt: 0 }
-    }).select('actualDistance fuelConsumed');
-
-    let avgFuelEfficiency = 0;
-    if (completedTripDocs.length > 0) {
-      const totalDist = completedTripDocs.reduce((s, t) => s + t.actualDistance, 0);
-      const totalFuel = completedTripDocs.reduce((s, t) => s + t.fuelConsumed, 0);
-      avgFuelEfficiency = totalFuel > 0
-        ? parseFloat((totalDist / totalFuel).toFixed(2))
-        : 0;
-    }
 
     res.json({
       activeVehicles,
@@ -61,11 +38,8 @@ router.get('/kpis', protect, async (req, res) => {
       inMaintenance,
       activeTrips,
       pendingTrips,
-      completedTrips,
       driversOnDuty,
-      fleetUtilization,
-      avgFuelEfficiency,
-      expiringLicenses
+      fleetUtilization
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

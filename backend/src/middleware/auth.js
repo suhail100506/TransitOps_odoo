@@ -36,19 +36,50 @@ const protect = async (req, res, next) => {
 const allowRoles = (roles = []) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authorized' });
+      return res.status(401).json({ success: false, error: 'NOT_AUTHORIZED', message: 'Not authorized' });
     }
 
-    // Admins are superusers and have access to all routes
-    if (req.user.role === 'admin' || roles.includes(req.user.role)) {
+    const userRole = req.user.role ? req.user.role.toLowerCase() : '';
+
+    // Superuser bypass: admin or Admin
+    if (userRole === 'admin') {
       return next();
     }
 
-    return res.status(403).json({ error: `Access denied. Requires role: ${roles.join(', ')}` });
+    // Check allowed roles case-insensitively
+    const allowed = roles.some(role => {
+      const r = role.toLowerCase();
+      if (r === userRole) return true;
+      if (userRole === 'dispatcher' && ['driver', 'safety_officer', 'financial_analyst'].includes(r)) return true;
+      if (userRole === 'fleet_manager' && r === 'admin') return true;
+      return false;
+    });
+
+    // Mapped role check
+    const roleMapping = {
+      fleet_manager: 'admin',
+      safety_officer: 'dispatcher',
+      financial_analyst: 'dispatcher',
+      driver: 'driver',
+      admin: 'admin'
+    };
+    const mappedUserRole = roleMapping[userRole] || userRole;
+    const allowedMapped = roles.some(role => {
+      const r = role.toLowerCase();
+      const mappedR = roleMapping[r] || r;
+      return mappedUserRole === mappedR;
+    });
+
+    if (allowed || allowedMapped) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: 'FORBIDDEN',
+      message: `Access denied. Required roles: ${roles.join(', ')}`
+    });
   };
 };
 
-module.exports = {
-  protect,
-  allowRoles
-};
+module.exports = { protect, allowRoles };

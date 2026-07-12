@@ -1,7 +1,11 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+<<<<<<< HEAD
 const { protect, allowRoles } = require('../middleware/auth');
+=======
+const { protect } = require('../middleware/auth');
+>>>>>>> trip
 const rateLimiter = require('../middleware/rateLimiter');
 
 const router = express.Router();
@@ -35,7 +39,6 @@ router.post('/create-user', protect, allowRoles(['admin']), async (req, res) => 
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Please provide all fields' });
     }
-
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ error: 'User already exists with this email' });
@@ -109,6 +112,7 @@ router.get('/me', protect, async (req, res) => {
   res.json({ user: req.user });
 });
 
+<<<<<<< HEAD
 // @route   PUT api/auth/profile
 // @desc    Update own profile (name and/or password)
 router.put('/profile', protect, async (req, res) => {
