@@ -10,10 +10,11 @@ import { Truck, AlertCircle } from 'lucide-react';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('fleet_manager');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,8 +23,13 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/');
+      const loggedInUser = await login(email, password);
+      if (loggedInUser.role !== role) {
+        logout();
+        setError('Access denied. Selected role does not match your account role.');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
     } finally {
@@ -32,56 +38,74 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
-      <Card className="w-full max-w-md shadow-lg border">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-2">
-            <div className="p-3 bg-primary/10 rounded-full text-primary">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-cyan-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/10 p-4">
+      <Card className="w-full max-w-md shadow-xl border border-slate-200/60 dark:border-slate-800/80 rounded-2xl bg-white/80 dark:bg-slate-950/70 backdrop-blur-md transition-all duration-300 hover:shadow-2xl hover:border-slate-200 dark:hover:border-slate-800">
+        <CardHeader className="space-y-2 text-center pt-8 pb-4">
+          <div className="flex justify-center mb-3">
+            <div className="p-3 bg-cyan-500/10 dark:bg-cyan-500/20 rounded-2xl text-cyan-600 dark:text-cyan-400 shadow-sm border border-cyan-500/20">
               <Truck className="h-6 w-6" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">TransitOps Portal</CardTitle>
-          <CardDescription>
-            Enter your credentials to log into your account
+          <CardTitle className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">TransitOps Portal</CardTitle>
+          <CardDescription className="text-sm text-slate-500 dark:text-slate-400">
+            Enter your credentials to access the fleet control board
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6 pb-6">
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              <div className="flex items-center gap-2 p-3 bg-red-500/10 dark:bg-red-500/25 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-sm animate-shake">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email Address</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10 px-3.5"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Password</Label>
               <Input
                 id="password"
                 type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 h-10 px-3.5"
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="role" className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Access Role</Label>
+              <select
+                id="role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="flex h-10 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-3.5 py-1.5 text-sm shadow-sm transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 focus:border-cyan-500 md:text-sm text-slate-900 dark:text-white"
+                required
+              >
+                <option value="fleet_manager" className="bg-slate-900 text-white">Fleet Manager</option>
+                <option value="driver" className="bg-slate-900 text-white">Dispatcher</option>
+                <option value="safety_officer" className="bg-slate-900 text-white">Safety Officer</option>
+                <option value="financial_analyst" className="bg-slate-900 text-white">Financial Analyst</option>
+              </select>
+            </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Log In'}
+          <CardFooter className="flex flex-col space-y-4 px-6 pb-8">
+            <Button type="submit" className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-medium transition-all shadow-md active:scale-[0.98]" disabled={loading}>
+              {loading ? 'Authenticating...' : 'Sign In'}
             </Button>
-            <div className="text-center text-sm text-muted-foreground">
+            <div className="text-center text-sm text-slate-500 dark:text-slate-400">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:underline font-medium">
+              <Link to="/signup" className="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold transition-all">
                 Sign up
               </Link>
             </div>
