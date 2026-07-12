@@ -84,9 +84,30 @@ const Drivers = () => {
         )}
       </div>
 
-      {/* Search Filter bar */}
-      <div className="flex items-center justify-between">
+      {/* Search & Status Filter bar */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <DriverFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">Status:</span>
+          <div className="flex flex-wrap gap-2">
+            {toggleStatuses.map((t) => {
+              const isSelected = selectedStatusFilter === t.label;
+              return (
+                <button
+                  key={t.label}
+                  onClick={() => setSelectedStatusFilter(isSelected ? null : t.label)}
+                  className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all duration-250 cursor-pointer shadow-sm border ${isSelected
+                      ? 'ring-2 ring-offset-1 ring-cyan-500 scale-[0.98] ' + t.style
+                      : 'opacity-70 hover:opacity-100 ' + t.style
+                    }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Driver Data Table Grid */}
@@ -95,28 +116,6 @@ const Drivers = () => {
         searchQuery={searchQuery}
         selectedStatusFilter={selectedStatusFilter}
       />
-
-      {/* Toggle Status section from mockup */}
-      <div className="space-y-3.5">
-        <span className="text-[10px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">Toggle Status Filter</span>
-        <div className="flex flex-wrap gap-3">
-          {toggleStatuses.map((t) => {
-            const isSelected = selectedStatusFilter === t.label;
-            return (
-              <button
-                key={t.label}
-                onClick={() => setSelectedStatusFilter(isSelected ? null : t.label)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-250 cursor-pointer shadow-sm border ${isSelected
-                  ? 'ring-2 ring-offset-2 ring-cyan-500 scale-[0.98] ' + t.style
-                  : 'opacity-70 hover:opacity-100 ' + t.style
-                  }`}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* Safety warning disclaimer note */}
       <div className="p-4 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-slate-200/40 dark:border-slate-800/80">
